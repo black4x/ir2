@@ -5,6 +5,7 @@ object Go extends App {
   val tipster = new TipsterStream ("data")
   println("Number of files in zips = " + tipster.length)
 
+
   var length : Long = 0
   var tokens : Long = 0
   for (doc <- tipster.stream.take(10000)) {
