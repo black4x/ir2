@@ -9,71 +9,85 @@ import scala.collection.mutable.ListBuffer
   * Created by Ralph on 20/11/16.
   */
 
-//todo adjust and finish. just copied it over from at the last poject and added placeholder methods
-class Scoring(val reuters_validate: Stream[XMLDocument], val result_classifier: Map[String, ListBuffer[String]]) {
+//todo, work in progress
+
+// query_results: [(Query ID, Rank), Doc ID]
+// Calculate metrics per Query. Except for MAP (which divides the APs of each query by the number of queries)
+class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_results: Map[(Int, Int), String]) {
+
+  // Returns the metrics per query. The List contains the metrics for each query
+  def calculateMetrics(): Map[Int, Array[Double]] = {
 
 
-  def calculatePrecision(): Double = {
-
-    1.0
-  }
-
-  def calculateRecall(): Double = {
-
-    1.0
-  }
+    var metrics_all_queries = Map[Int, Array[Double]]()
 
 
-  def calculateF1(): Double = {
+    val queryIDs: List[Int] = query_results.map(result => result._1).map(key => key._1).toList.distinct
+
+    queryIDs.foreach{ queryID =>
+
+      // Calculate precision
+      val results_of_single_query = query_results.filter((key) => key._1 == queryID)
+      val precision_of_query = calculatePrecisionPerQuery(queryID, results_of_single_query)
+
+      // Calculate recall
+
+      val recall_of_query = 1.0
+
+      // Calculate F1
+
+      val f1_of_query = 1.0
+
+      // Calculate AP
 
 
-    val nr_of_docs = reuters_validate.size.toDouble
-    val F1_total = reuters_validate.map(doc => calculateF1PerDoc(doc)).sum / nr_of_docs
-    return F1_total
+      val ap_of_query = 1.0
 
-  }
+      // Add results
+      metrics_all_queries += (queryID -> (precision_of_query, recall_of_query, f1_of_query, ap_of_query))
 
-  private def calculateF1PerDoc(vali_doc: XMLDocument): Double = {
-
-    val labels_correct = vali_doc.codes
-    //println("codes of validation doc " + labels_correct + " " + labels_correct.size)
-
-    // Just in case we check if there is a result for validation document
-    if (!result_classifier.exists(_._1 == vali_doc.name)) {
-      println("No result found for Doc: " + vali_doc.name)
-      return 0.0
     }
 
-    val labels_predicted = result_classifier(vali_doc.name)
-    val nr_labels_predicted = labels_predicted.size.toDouble
+    return metrics_all_queries
+    
+  }
 
-    if (nr_labels_predicted == 0) return 0.0
+  private def calculatePrecisionPerQuery(query: Int, result: Map[(Int, Int), String]): Double = {
 
-    // Count how many predicted labels are actually in the validation document
-    var nr_labels_classified_correct = 0.0
-    labels_predicted.foreach(label_predicted => {
-      if (labels_correct.contains(label_predicted)) {
-        nr_labels_classified_correct += 1
+    // First, get all correct documents for the current query from the relevance judgement
+    // Filter on relevant doc (=1) and then filter for the current Query and then get only the Doc IDs (can be optimized :-) )
+    val total_relevant_docs: List[String] = relevance_judgement.filter((x) => x._2 == 1).filter((x) => x._1._1 == query).map(x => x._1._3).toList
+
+    // Count how many documents returned by the query are correct based on the relevance judgement
+    var tp = 0.0
+    result.foreach(result_tuple => {
+      if (total_relevant_docs.contains(result_tuple._2)){
+        tp += 1
       }
     })
 
-    //println("correct prediction: " + nr_labels_classified_correct)
-    //println("total labels in doc: " + labels_correct.size)
+    // Get TP + FP = all results of query
+    val tp_fp = result.size
 
-    val precision = nr_labels_classified_correct / nr_labels_predicted
-    val recall = nr_labels_classified_correct / labels_correct.size
-
-    //println("per and recall " + precision + " " + recall)
-    if (precision + recall == 0) {
-      return 0.0
-    }
-    else {
-      return (2 * precision * recall) / (precision + recall)
-    }
+    // Now calculate it
+    return tp / tp_fp
 
   }
 
-  def calculateAvgPrecision(): Double = {
+
+  private def calculateRecallPerQuery(): Double = {
+
+    1.0
+  }
+
+
+
+  private def calculateF1PerQuery(): Double = {
+
+    1.0
+  }
+
+  def calculateAvgPrecisionPerQuery(): Double = {
     1.0
 
   }
