@@ -6,4 +6,4 @@ scalaVersion := "2.11.8"
 
 unmanagedBase := baseDirectory.value / "lib"
 
-javaOptions in run ++= Seq("-Xms1G", "-Xmx4G")
+javaOptions in run ++= Seq("-Xms10G", "-Xmx14G")
