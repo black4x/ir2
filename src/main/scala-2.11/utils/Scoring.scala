@@ -23,12 +23,17 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
 
 
     val queryIDs: List[Int] = query_results.map(result => result._1).map(key => key._1).toList.distinct
+    println("query IDs " + queryIDs)
 
     queryIDs.foreach{ queryID =>
 
       // Calculate precision
-      val results_of_single_query = query_results.filter((key) => key._1 == queryID)
+      println("all query results" + query_results)
+      println(query_results.map(x => x._1._1))
+      val results_of_single_query = query_results.filter((key) => key._1._1 == queryID)
+      println("Results of single query " + results_of_single_query)
       val precision_of_query = calculatePrecisionPerQuery(queryID, results_of_single_query)
+      println("Precision " + precision_of_query)
 
       // Calculate recall
 
@@ -44,7 +49,7 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
       val ap_of_query = 1.0
 
       // Add results
-      metrics_all_queries += (queryID -> (precision_of_query, recall_of_query, f1_of_query, ap_of_query))
+      metrics_all_queries += (queryID -> Array(precision_of_query, recall_of_query, f1_of_query, ap_of_query))
 
     }
 
@@ -57,14 +62,17 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
     // First, get all correct documents for the current query from the relevance judgement
     // Filter on relevant doc (=1) and then filter for the current Query and then get only the Doc IDs (can be optimized :-) )
     val total_relevant_docs: List[String] = relevance_judgement.filter((x) => x._2 == 1).filter((x) => x._1._1 == query).map(x => x._1._3).toList
+    println("total relevant docs " + total_relevant_docs)
 
     // Count how many documents returned by the query are correct based on the relevance judgement
     var tp = 0.0
     result.foreach(result_tuple => {
+      println("result tuple " + result_tuple._2)
       if (total_relevant_docs.contains(result_tuple._2)){
         tp += 1
       }
     })
+    println("TP " + tp)
 
     // Get TP + FP = all results of query
     val tp_fp = result.size

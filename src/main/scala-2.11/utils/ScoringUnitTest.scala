@@ -1,9 +1,11 @@
 package utils
 
-
 import scala.collection.Map
 
-object ScoringTest extends App {
+/**
+  * Created by Ralph on 22/11/16.
+  */
+object ScoringUnitTest extends App {
 
   var relevance_judgement = Map[(Int, Int, String), Int]()
   var query_results = Map[(Int, Int), String]()
@@ -24,14 +26,16 @@ object ScoringTest extends App {
   query_results += ((2,1) -> "DOC-A")
   query_results += ((2,2) -> "DOC-E")
 
-  println(relevance_judgement)
-  println(query_results)
+  //println(relevance_judgement)
+  //println(query_results)
 
   val myScoring = new Scoring(relevance_judgement, query_results)
 
   val metrics = myScoring.calculateMetrics()
 
-  println(metrics)
+  metrics.foreach(metrics_per_query => {
+    println(metrics_per_query._1 + " " + metrics_per_query._2.mkString)
+  })
 
 
 }
