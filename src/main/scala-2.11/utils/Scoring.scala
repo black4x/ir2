@@ -49,7 +49,7 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
     }
 
     return metrics_all_queries
-    
+
   }
 
   private def calculatePrecisionPerQuery(query: Int, result: Map[(Int, Int), String]): Double = {
@@ -77,7 +77,7 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
 
   private def calculateRecallPerQuery(): Double = {
 
-    1.0
+    1.0 //dummy
   }
 
 
@@ -87,12 +87,12 @@ class Scoring(val relevance_judgement: Map[(Int, Int, String), Int], val query_r
     1.0
   }
 
-  def calculateAvgPrecisionPerQuery(): Double = {
+  private def calculateAvgPrecisionPerQuery(): Double = {
     1.0
 
   }
 
-  def calculateMAP(): Double = {
+  private def calculateMAP(): Double = {
     1.0
 
   }
