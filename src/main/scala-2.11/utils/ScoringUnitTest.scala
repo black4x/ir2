@@ -17,8 +17,9 @@ object ScoringUnitTest extends App {
   relevance_judgement += ((1, 0, "DOC-D") -> 0)
 
   relevance_judgement += ((2, 0, "DOC-A") -> 1)
-  relevance_judgement += ((2, 0, "DOC-E") -> 1)
+  relevance_judgement += ((2, 0, "DOC-E") -> 0)
 
+  // 1 correct out of 3
   query_results += ((1,1) -> "DOC-A")
   query_results += ((1,2) -> "DOC-C")
   query_results += ((1,3) -> "DOC-D")
@@ -33,8 +34,16 @@ object ScoringUnitTest extends App {
 
   val metrics = myScoring.calculateMetrics()
 
+  /*
   metrics.foreach(metrics_per_query => {
     println(metrics_per_query._1 + " " + metrics_per_query._2.mkString)
+  })
+  */
+
+  metrics.foreach(metrics_per_query => {
+    print(metrics_per_query._1 + " ")
+    metrics_per_query._2.foreach(metric => { print(metric.toString + " ")})
+    println(" ")
   })
 
 
