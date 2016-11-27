@@ -1,11 +1,11 @@
-package utils
+package Evaluation
 
 import scala.collection.Map
 
 /**
   * Created by Ralph on 22/11/16.
   */
-object ScoringUnitTest extends App {
+object QueryEvaluationUnitTest extends App {
 
   var relevance_judgement = Map[(Int, Int, String), Int]()
   var query_results = Map[(Int, Int), String]()
@@ -70,11 +70,11 @@ object ScoringUnitTest extends App {
   val relevance_judgement_clean: Map[(Int, String), Int] = relevance_judgement.map(
     rj_tuple => ((rj_tuple._1._1, rj_tuple._1._3), rj_tuple._2))
 
-  val myScoring = new Scoring(relevance_judgement_clean, query_results)
-  myScoring.calculateMetrics()
+  val myQE = new QueryEvaluation(relevance_judgement_clean, query_results)
+  myQE.calculateMetrics()
 
-  val metrics = myScoring.getQueryMetrics()
-  val meanAvgPrecision = myScoring.getMAP()
+  val metrics = myQE.getQueryMetrics()
+  val meanAvgPrecision = myQE.getMAP()
 
   /*
   metrics.foreach(metrics_per_query => {

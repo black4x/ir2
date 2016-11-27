@@ -1,10 +1,7 @@
-package utils
-
-import ch.ethz.dal.tinyir.processing.XMLDocument
+package Evaluation
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
-import scala.collection.mutable.ListBuffer
 
 /**
   * Created by Ralph on 20/11/16.
@@ -12,7 +9,7 @@ import scala.collection.mutable.ListBuffer
 
 
 // query_results: [(Query ID, Rank), Doc ID]
-class Scoring(val relevance_judgement: Map[(Int, String), Int], val query_results: Map[(Int, Int), String]) {
+class QueryEvaluation(val relevance_judgement: Map[(Int, String), Int], val query_results: Map[(Int, Int), String]) {
 
   val total_relevant_judged_docs: Map[(Int, String), Int] = relevance_judgement.filter((x) => x._2 == 1)
   val queryIDs: List[Int] = query_results.map(result => result._1).map(key => key._1).toList.distinct
