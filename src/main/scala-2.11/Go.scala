@@ -39,12 +39,12 @@ object Go extends App {
     termFrequencyMap.values.filter(tf => tf != 0).map(tf => tf.toDouble / size.toDouble).product
   }
 
-  def getCodeValueMap(forNumber: String, inputStream: InputStream): Map[String, (Int, Int)] =
+  def getCodeValueMap(forNumber: String, inputStream: InputStream): Map[(Int, String), Int] =
     scala.io.Source.fromInputStream(inputStream).getLines()
       .filterNot(_ startsWith forNumber)
       .map(_ split " ")
       // 51 0 AP880311-0301 1
-      .collect { case Array(number, ignore, name, relevance) => (name, (number.toInt, relevance.toInt)) }
+      .collect { case Array(number, ignore, name, relevance) => ((number.toInt, name), relevance.toInt) }
       .toMap
 
 
