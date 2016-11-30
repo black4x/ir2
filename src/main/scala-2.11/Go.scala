@@ -8,11 +8,11 @@ import utils.TopResults
 object Go extends App {
 
   val tipsterStream = new ZipDirStream("data").stream
-  val relevanceStream = new FileInputStream("data/relevance-judgements.csv")
+  //val relevanceStream = new FileInputStream("data/relevance-judgements.csv")
 
   println("Number of files in zips = " + tipsterStream.length)
 
-  println(getCodeValueMap("51", relevanceStream).size)
+ // println(getCodeValueMap("51", relevanceStream).size)
 
   val query = "Airbus Subsidies".toLowerCase().split(" ")
   val top1000 = new TopResults(1000)
