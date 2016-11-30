@@ -11,15 +11,17 @@ object HelloWorld {
     val path : String = "C:\\Users\\Thomas\\Desktop\\IRProject2\\documents"
     var parsedstream = new TipsterStream(path).stream 
     parsedstream=parsedstream.take(3)
-   
-    for (doc <- parsedstream) {
-      println("%s,%s".format(doc.name,doc.content))
-     
-    }
+
 
     val qs=new QuerySystem(parsedstream)
     println(qs.query("A court ruled Friday"))
     
   }
 }
-  
+
+
+/*for (doc <- parsedstream) {
+  println("%s,%s".format(doc.name,doc.content))
+
+}
+*/

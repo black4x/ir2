@@ -12,13 +12,9 @@ class QuerySystem(parsedstream:Stream[Document]) {
     
     /*creates the inverted index*/
     val invertedTFIndex  =tfTuples.groupBy(_.term).mapValues(_.map(tfT => (tfT.doc, tfT.count)).sorted)
-    println(invertedTFIndex)
     val vocabulary=invertedTFIndex.keys
-    println(vocabulary)
     val documentFrequency=invertedTFIndex.mapValues(list=>list.length) //Map from word (===token) to its document frequency
-    println(documentFrequency)
     var documentLength = parsedstream.map(d =>(d.name,tokenListFiltered(d.content).length)).toMap //Map from doc to its length
-    println(documentLength)
 
     def query(querystring:String)={
       val tokenList= tokenListFiltered(querystring)
