@@ -1,11 +1,13 @@
 import java.io.FileInputStream
 
+import Evaluation.QueryEvaluation
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
 import main.QuerySystem
 import utils.InOutUtils
 
+import scala.collection.immutable.ListMap
 import scala.collection.Map
 
 /**
@@ -29,31 +31,43 @@ object GoQuery extends App {
   val test_queries = InOutUtils.getTestQueries(query_stream)
 
 
-
-  // todo: then call the query and specify which model to use. The constructor of QuerySystem create the inverted index
-  // todo: At the end submit result and relevance judgement to the evaluation class
-
   // Create the Inverted Index for the document collection
   val q_sys = new QuerySystem(collection_tipster_stream)
 
-  // Start of query
+  // TODO: submit parameter that tells which query model to use: language or term based
+
   println("start of query")
   var query_results_top_100 = Map[(Int, Int), String]()
   test_queries.foreach( query => {
 
-    query_results_top_100 = q_sys.query(query._1, query._2)
+    // Combine the results of each query into one Map
+    query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
 
   })
 
+  // Sort by Query ID
+  val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(_._1._1):_*)
 
-  query_results_top_100.foreach(result => {
+  query_results_top_100_sorted.foreach(result => {
 
     println(result)
 
   })
 
+  // Evaluate results (calculate metrics)
+  val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
+  myQE.calculateMetrics()
 
+  val metrics = myQE.getQueryMetrics()
+  val meanAvgPrecision = myQE.getMAP()
 
-  //println(qs.query("A court ruled Friday"))
+  metrics.foreach(metrics_per_query => {
+    print(metrics_per_query._1 + " ")
+    metrics_per_query._2.foreach(metric => { print(metric.toString + " ")})
+    println(" ")
+  })
+
+  println("MAP is: " + meanAvgPrecision)
+
 
 }

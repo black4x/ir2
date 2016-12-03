@@ -26,7 +26,7 @@ class QuerySystem(parsedstream:Stream[Document]) {
 
 
   myStopWatch.start
-  val documentFrequency=invertedTFIndex.mapValues(list=>list.length) //Map from word (===token) to its document frequency
+  val documentFrequency: Map[String, Double] = invertedTFIndex.mapValues(list=>list.length) //Map from word (===token) to its document frequency
   myStopWatch.stop
   println("Time elapsed to create documentFrequency:%s".format(myStopWatch.stopped))
   //    println(documentFrequency.toList.sortBy(-_._2))
@@ -63,17 +63,23 @@ class QuerySystem(parsedstream:Stream[Document]) {
 
   def log2(x:Double):Double= math.log(x)/math.log(2)
 
-  def scoring(queryTokenList:Seq[String],doc:String)={
+  def scoring(queryTokenList:Seq[String],doc:String) = {
     //val scorings=queryTokenList.map(token=>invertedTFIndexReturnTF(token,doc))
     //val scorings=queryTokenList.map(token=>math.log(invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))
 
     //the following function normalized the tf with the document length. Hence longer docs are not favourte. Used
     val scorings=queryTokenList.map(token=>log2((invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))*
-      (log2(nDocs)-log2(documentFrequency(token))))
+      (log2(nDocs)-log2(documentFrequency.getOrElse(token, 1.0))))
 
-    val result=scorings.sum
+    val result = scorings.sum
     result
   }
+
+  /*
+  val scorings=queryTokenList.map(token=>log2((invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))*
+    (log2(nDocs)-log2(documentFrequency(token))))
+*/
+
 
   /*Given a document and a token, this function returns the term frequency. Works also if token is not in the doc => tf=0*/
   def invertedTFIndexReturnTF(token:String,doc:String)={

@@ -27,8 +27,8 @@ object InOutUtils {
 
   def getTestQueries(inputStream: InputStream): List[(Int, String)] = {
 
-    //dummy "Airbus Subsidies"
-    return List((51, "Strategists for Jack Kemp's presidentialcampaign say George Bush"))
+    //dummy. query 999 does not exist, just for test
+    return List((51, "Airbus Subsidies"), (52, "South African Sanctions"))
   }
 
 }
