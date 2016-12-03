@@ -5,6 +5,8 @@ import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 
+import scala.collection.Map
+
 
 
 class QuerySystem(parsedstream:Stream[Document]) {
@@ -36,13 +38,21 @@ class QuerySystem(parsedstream:Stream[Document]) {
   println("Time elapsed to create documentLength:%s".format(myStopWatch.stopped))
   val nDocs=documentLength.size
 
-  def query(querystring:String)={
+  def query(queryID: Int, querystring: String): Map[(Int, Int), String]= {
+    val tokenList= tokenListFiltered(querystring)
+    val candidateDocs=tokenList.flatMap(token=>invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
+    candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
+      .map(result_tuple => ((queryID, result_tuple._2), result_tuple._1._1)).toMap
+  }
+
+//obsolete
+  /*
+  def query2(queryID: Int, querystring: String) {
     val tokenList= tokenListFiltered(querystring)
     val candidateDocs=tokenList.flatMap(token=>invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
     candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
   }
-
-
+*/
   /*Input a eg content of doc, output a list of tokens without stopwords and stemmed*/
   def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
 

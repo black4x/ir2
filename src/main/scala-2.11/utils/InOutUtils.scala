@@ -25,5 +25,10 @@ object InOutUtils {
       .toMap
   }
 
+  def getTestQueries(inputStream: InputStream): List[(Int, String)] = {
+
+    //dummy "Airbus Subsidies"
+    return List((51, "Strategists for Jack Kemp's presidentialcampaign say George Bush"))
+  }
 
 }

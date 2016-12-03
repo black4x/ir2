@@ -6,6 +6,8 @@ import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
 import main.QuerySystem
 import utils.InOutUtils
 
+import scala.collection.Map
+
 /**
   * Created by Ralph on 30/11/16.
   */
@@ -22,16 +24,36 @@ object GoQuery extends App {
   // this crashes as there are invalid xml tags!!
   //val query_tipster_parse = new TipsterParse(DocStream.getStream("data/questions-descriptions.txt"))
 
+  // Get list of query IDs and their titles (query ID needed for submission format!)
   val query_stream = DocStream.getStream("data/questions-descriptions.txt")
-  //scala.io.Source.fromInputStream(query_stream).getLines()
-
+  val test_queries = InOutUtils.getTestQueries(query_stream)
 
 
 
   // todo: then call the query and specify which model to use. The constructor of QuerySystem create the inverted index
   // todo: At the end submit result and relevance judgement to the evaluation class
 
-  val qs=new QuerySystem(collection_tipster_stream)
-  println(qs.query("A court ruled Friday"))
+  // Create the Inverted Index for the document collection
+  val q_sys = new QuerySystem(collection_tipster_stream)
+
+  // Start of query
+  println("start of query")
+  var query_results_top_100 = Map[(Int, Int), String]()
+  test_queries.foreach( query => {
+
+    query_results_top_100 = q_sys.query(query._1, query._2)
+
+  })
+
+
+  query_results_top_100.foreach(result => {
+
+    println(result)
+
+  })
+
+
+
+  //println(qs.query("A court ruled Friday"))
 
 }

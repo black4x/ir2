@@ -5,7 +5,7 @@ import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 
-object HelloWorld {
+object HelloWorldWithSharding {
   def main(args: Array[String]) {     
 
     val path : String = "C:\\Users\\Thomas\\Desktop\\IRProject2\\documents"

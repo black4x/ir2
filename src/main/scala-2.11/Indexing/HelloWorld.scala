@@ -30,7 +30,7 @@ object HelloWorld {
     //Time elapsed to create documentLength:in 14.519832688 sec.
 
     val qs=new QuerySystem(parsedstream)
-    println(qs.query("Strategists for Jack Kemp's presidentialcampaign say George Bush"))
+    //println(qs.query("Strategists for Jack Kemp's presidentialcampaign say George Bush"))
 
   }
 }
