@@ -9,9 +9,9 @@ import com.github.aztek.porterstemmer.PorterStemmer
 
 class QuerySystem(parsedstream:Stream[Document]) {
 
+  val myStopWatch = new StopWatch()
 
   /*creates the inverted index*/
-  val myStopWatch = new StopWatch()
   myStopWatch.start
   val invertedTFIndex  =tfTuples.groupBy(_.term).mapValues(_.map(tfT => (tfT.doc, tfT.count)).toList.sorted)
   myStopWatch.stop

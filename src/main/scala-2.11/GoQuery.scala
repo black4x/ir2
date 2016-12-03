@@ -8,12 +8,12 @@ import utils.InOutUtils
 /**
   * Created by Ralph on 30/11/16.
   */
-object GoQuery {
+object GoQuery extends App {
 
 
-  val path : String = "C:\\Users\\Thomas\\Desktop\\IRProject2\\documents"
+  val path : String = "data"
   var parsedstream = new TipsterStream(path).stream
-  parsedstream=parsedstream.take(3)
+  parsedstream=parsedstream.take(100)
 
   val relevance_judgement_stream = new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
