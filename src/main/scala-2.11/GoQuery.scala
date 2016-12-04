@@ -4,7 +4,7 @@ import Evaluation.QueryEvaluation
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
-import main.QuerySystem
+import main.{QuerySystem, QuerySystemWithSharding}
 import utils.InOutUtils
 
 import scala.collection.immutable.ListMap
@@ -15,9 +15,13 @@ import scala.collection.Map
   */
 object GoQuery extends App {
 
+  // Todo: Read parameters from console
+
+  val index_mode = "normal" // sharding"
+
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(1000)
+  collection_tipster_stream = collection_tipster_stream.take(100)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -29,7 +33,13 @@ object GoQuery extends App {
 
 
   // Create the Inverted Index for the document collection
-  val q_sys = new QuerySystem(collection_tipster_stream)
+  var q_sys: QuerySystem = null
+  var q_sys_sharding: QuerySystemWithSharding = null
+  if (index_mode == "normal") {
+    q_sys = new QuerySystem(collection_tipster_stream)
+  } else{
+    q_sys_sharding = new QuerySystemWithSharding(collection_tipster_stream,30000)
+  }
 
   // TODO: submit parameter that tells which query model to use: language or term based
 

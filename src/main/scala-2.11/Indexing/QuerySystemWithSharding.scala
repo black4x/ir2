@@ -36,7 +36,7 @@ class QuerySystemWithSharding(var wholestream:Stream[Document],chuncksize:Int = 
     
     val nDocs=docShards.toList.map(x=>x.documentLength.size).sum 
 
-    def query(querystring:String)={
+    def query(queryID: Int, querystring:String): Map[(Int, Int), String] = {
       val tokenList= tokenListFiltered(querystring)
       var candidateDocs=Seq[String]()
       for (loop <- 0 until docShards.length) {
@@ -44,6 +44,7 @@ class QuerySystemWithSharding(var wholestream:Stream[Document],chuncksize:Int = 
         candidateDocs=candidateDocs.union(candidateDocsShard)
       }
       candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
+        .map(result_tuple => ((queryID, result_tuple._2), result_tuple._1._1)).toMap
     }
     
     

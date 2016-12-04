@@ -30,8 +30,8 @@ object HelloWorldWithSharding {
 //Time elapsed to create documentFrequency:in 4.02963E-4 sec.
 //Time elapsed to create documentLength:in 14.519832688 sec.
 
-    val qs=new QuerySystemWithSharding(parsedstream,30000)
-    println(qs.query("Strategists for Jack Kemp's presidentialcampaign say George Bush"))
+   // val qs=new QuerySystemWithSharding(parsedstream,30000)
+   // println(qs.query("Strategists for Jack Kemp's presidentialcampaign say George Bush"))
     
   }
 }
