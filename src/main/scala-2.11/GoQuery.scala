@@ -17,14 +17,11 @@ object GoQuery extends App {
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(100)
+  collection_tipster_stream = collection_tipster_stream.take(1000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
 
-  // Get the queries = title from questions-descriptions.txt (remove "Topic:")
-  // this crashes as there are invalid xml tags!!
-  //val query_tipster_parse = new TipsterParse(DocStream.getStream("data/questions-descriptions.txt"))
 
   // Get list of query IDs and their titles (query ID needed for submission format!)
   val query_stream = DocStream.getStream("data/questions-descriptions.txt")
@@ -46,7 +43,7 @@ object GoQuery extends App {
   })
 
   // Sort by Query ID
-  val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(_._1._1):_*)
+  val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
 
   query_results_top_100_sorted.foreach(result => {
 

@@ -15,7 +15,8 @@ class QuerySystem(parsedstream:Stream[Document]) {
 
   /*creates the inverted index*/
   myStopWatch.start
-  val invertedTFIndex  =tfTuples.groupBy(_.term).mapValues(_.map(tfT => (tfT.doc, tfT.count)).toList.sorted)
+  // tfTuples is a function
+  val invertedTFIndex = tfTuples.groupBy(_.term).mapValues(_.map(tfT => (tfT.doc, tfT.count)).toList.sorted)
   myStopWatch.stop
   println("Time elapsed to create invertedTFIndex:%s".format(myStopWatch.stopped))
 
@@ -32,7 +33,7 @@ class QuerySystem(parsedstream:Stream[Document]) {
   //    println(documentFrequency.toList.sortBy(-_._2))
 
   myStopWatch.start
-  //stores doc0->(doclength,#distinct words)
+  //stores doc0->(doclength,#distinct words) Doc ID -> Doc Length, #distinct words
   var documentLength = parsedstream.map(d =>(d.name,(tokenListFiltered(d.content).length,tokenListFiltered(d.content).distinct.length))).toMap //Map from doc to its length
   myStopWatch.stop
   println("Time elapsed to create documentLength:%s".format(myStopWatch.stopped))
@@ -56,7 +57,7 @@ class QuerySystem(parsedstream:Stream[Document]) {
   /*Input a eg content of doc, output a list of tokens without stopwords and stemmed*/
   def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
 
-  /*tfTuples returns for an input stream of documents the list of postings including termfrequencies*/
+  /*tfTuples returns for an input stream of documents the list of postings including term frequencies*/
   def tfTuples ={
     parsedstream.flatMap(d =>tokenListFiltered(d.content).groupBy(identity).map{ case (tk,lst) => TfTuple(tk,d.name, lst.length)})
   }
@@ -67,7 +68,7 @@ class QuerySystem(parsedstream:Stream[Document]) {
     //val scorings=queryTokenList.map(token=>invertedTFIndexReturnTF(token,doc))
     //val scorings=queryTokenList.map(token=>math.log(invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))
 
-    //the following function normalized the tf with the document length. Hence longer docs are not favourte. Used
+    //the following function normalized the tf with the document length. Hence longer docs are not favored.
     val scorings=queryTokenList.map(token=>log2((invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))*
       (log2(nDocs)-log2(documentFrequency.getOrElse(token, 1.0))))
 

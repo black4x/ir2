@@ -26,9 +26,14 @@ object InOutUtils {
   }
 
   def getTestQueries(inputStream: InputStream): List[(Int, String)] = {
+    // Using Tipster Parse does not work as the text file contains incorrect XML Tags
+    // So we have the search the file line by line for the topics and query IDs
+    // this crashes as there are invalid xml tags!!
+    //val query_tipster_parse = new TipsterParse(DocStream.getStream("data/questions-descriptions.txt"))
 
     //dummy. query 999 does not exist, just for test
     return List((51, "Airbus Subsidies"), (52, "South African Sanctions"))
+
   }
 
 }
