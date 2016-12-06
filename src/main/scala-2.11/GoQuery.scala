@@ -1,6 +1,7 @@
 import java.io.FileInputStream
 
 import Evaluation.QueryEvaluation
+import Indexing.QuerySystem2
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
@@ -37,10 +38,10 @@ object GoQuery extends App {
 
 
   // Create the Inverted Index for the document collection
-  var q_sys: QuerySystem = null
+  var q_sys: QuerySystem2 = null
   var q_sys_sharding: QuerySystemWithSharding = null
   if (index_mode == "normal") {
-    q_sys = new QuerySystem(collection_tipster_stream)
+    q_sys = new QuerySystem2(collection_tipster_stream)
   } else{
     q_sys_sharding = new QuerySystemWithSharding(collection_tipster_stream,30000)
   }
