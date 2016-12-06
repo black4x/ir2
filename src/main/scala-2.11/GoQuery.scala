@@ -26,7 +26,7 @@ object GoQuery extends App {
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(200)
+  collection_tipster_stream = collection_tipster_stream.take(20000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)

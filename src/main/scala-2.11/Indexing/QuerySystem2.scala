@@ -14,7 +14,10 @@ class QuerySystem2(parsedstream:Stream[Document]) {
   val myStopWatch = new StopWatch()
 
   /*Map Doc Names to Integer Numbers*/
+  myStopWatch.start
   val docMap: Map[String, Int] = parsedstream.map(d => d.name).zip(Stream from 1).map(doc_tuple =>  doc_tuple._1 -> doc_tuple._2).toMap
+  myStopWatch.stop
+  println("docMap created " + myStopWatch.stopped)
   //docMap foreach (doc => println(doc))
 
   /*creates the inverted index*/
@@ -49,7 +52,7 @@ class QuerySystem2(parsedstream:Stream[Document]) {
   def query(queryID: Int, querystring: String): Map[(Int, Int), String]= {
     val tokenList= tokenListFiltered(querystring)
     val candidateDocs=tokenList.flatMap(token=>invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
-    println("condidate Docs: " + candidateDocs.size)
+    //println("condidate Docs: " + candidateDocs.size)
 
     candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
       .map(result_tuple => ((queryID, result_tuple._2), getDocName(result_tuple._1._1))).toMap
