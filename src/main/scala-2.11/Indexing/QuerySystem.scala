@@ -55,7 +55,13 @@ class QuerySystem(parsedstream:Stream[Document]) {
   }
 */
   /*Input a eg content of doc, output a list of tokens without stopwords and stemmed*/
-  def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
+  def tokenListFiltered(doccontent: String) = {
+    //StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
+
+    // Calling the custom Tokenizer instead
+    MyTokenizer.tokenListFiltered(doccontent)
+
+  }
 
   /*tfTuples returns for an input stream of documents the list of postings including term frequencies*/
   def tfTuples ={

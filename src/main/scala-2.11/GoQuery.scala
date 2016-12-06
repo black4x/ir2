@@ -4,6 +4,7 @@ import Evaluation.QueryEvaluation
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
+import ch.ethz.dal.tinyir.util.StopWatch
 import main.{QuerySystem, QuerySystemWithSharding}
 import utils.InOutUtils
 
@@ -19,9 +20,12 @@ object GoQuery extends App {
 
   val index_mode = "normal" // sharding"
 
+  val myStopWatch = new StopWatch()
+  myStopWatch.start
+
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(100)
+  collection_tipster_stream = collection_tipster_stream.take(200)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -76,5 +80,7 @@ object GoQuery extends App {
 
   println("MAP is: " + meanAvgPrecision)
 
+  myStopWatch.stop
+  println("total time: " + myStopWatch.stopped)
 
 }
