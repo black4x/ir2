@@ -27,7 +27,7 @@ object GoQuery extends App {
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(2000)
+  collection_tipster_stream = collection_tipster_stream.take(1000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -44,7 +44,7 @@ object GoQuery extends App {
   if (index_mode == "normal") {
     q_sys = new QuerySystem2(collection_tipster_stream)
   } else{
-    q_sys_sharding = new QuerySystemWithSharding2(collection_tipster_stream,1000)
+    q_sys_sharding = new QuerySystemWithSharding2(collection_tipster_stream,500)
   }
 
   // TODO: submit parameter that tells which query model to use: language or term based
@@ -75,8 +75,11 @@ object GoQuery extends App {
   val meanAvgPrecision = myQE.getMAP()
 
   metrics.foreach(metrics_per_query => {
-    print(metrics_per_query._1 + " ")
-    metrics_per_query._2.foreach(metric => { print(metric.toString + " ")})
+    print("Query: " + metrics_per_query._1 + " -> ")
+    print("Precision: " + metrics_per_query._2(0))
+    print(", Recall: " + metrics_per_query._2(1))
+    print(", F1: " + metrics_per_query._2(2))
+    print(", Avg Precision: " + metrics_per_query._2(3))
     println(" ")
   })
 
@@ -86,3 +89,5 @@ object GoQuery extends App {
   println("total time: " + myStopWatch.stopped)
 
 }
+
+//metrics_per_query._2.foreach(metric => { print(metric.toString + " ")})
