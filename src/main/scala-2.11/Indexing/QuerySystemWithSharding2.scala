@@ -7,7 +7,14 @@ import main.DocShard
 import scala.collection.mutable.ListBuffer
 
 class QuerySystemWithSharding2(var wholestream:Stream[Document], chuncksize:Int = 30000) {
-    
+
+  private val runtime = Runtime.getRuntime()
+  import runtime.{ totalMemory, freeMemory, maxMemory }
+  print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory)/1000000)
+  print("** Free Memory:  " + runtime.freeMemory/1000000)
+  print("** Total Memory: " + runtime.totalMemory/1000000)
+  println("** Max Memory:   " + runtime.maxMemory/1000000)
+
     var count=0
     var docShards = new ListBuffer[DocShard2]()
     while ( ! wholestream.isEmpty){
@@ -17,7 +24,11 @@ class QuerySystemWithSharding2(var wholestream:Stream[Document], chuncksize:Int 
       println(count)
       val docShard = new DocShard2(partstream)
       docShards+=docShard
-      
+
+      print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory)/1000000)
+      print("** Free Memory:  " + runtime.freeMemory/1000000)
+      print("** Total Memory: " + runtime.totalMemory/1000000)
+      println("** Max Memory:   " + runtime.maxMemory/1000000)
     }  
 
   
