@@ -1,12 +1,13 @@
 import java.io.FileInputStream
 
 import Evaluation.QueryEvaluation
-import Indexing.QuerySystem2
+import Indexing.{QuerySystem2, QuerySystemWithSharding2}
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
 import ch.ethz.dal.tinyir.util.StopWatch
 import main.{QuerySystem, QuerySystemWithSharding}
+import main.QuerySystem
 import utils.InOutUtils
 
 import scala.collection.immutable.ListMap
@@ -19,14 +20,14 @@ object GoQuery extends App {
 
   // Todo: Read parameters from console
 
-  val index_mode = "normal" // sharding"
+  val index_mode = "sharding" // sharding"
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(20000)
+  collection_tipster_stream = collection_tipster_stream.take(2000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -39,11 +40,11 @@ object GoQuery extends App {
 
   // Create the Inverted Index for the document collection
   var q_sys: QuerySystem2 = null
-  var q_sys_sharding: QuerySystemWithSharding = null
+  var q_sys_sharding: QuerySystemWithSharding2 = null
   if (index_mode == "normal") {
     q_sys = new QuerySystem2(collection_tipster_stream)
   } else{
-    q_sys_sharding = new QuerySystemWithSharding(collection_tipster_stream,30000)
+    q_sys_sharding = new QuerySystemWithSharding2(collection_tipster_stream,1000)
   }
 
   // TODO: submit parameter that tells which query model to use: language or term based
@@ -53,7 +54,7 @@ object GoQuery extends App {
   test_queries.foreach( query => {
 
     // Combine the results of each query into one Map
-    query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
+    query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2)
 
   })
 
