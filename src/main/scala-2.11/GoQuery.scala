@@ -31,7 +31,7 @@ object GoQuery extends App {
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
-  relevance_judgement.foreach(rj => println(rj))
+  //relevance_judgement.foreach(rj => println(rj))
 
   // Get list of query IDs and their titles (query ID needed for submission format!)
   val query_stream = DocStream.getStream("data/questions-descriptions.txt")
