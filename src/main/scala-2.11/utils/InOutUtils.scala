@@ -13,7 +13,7 @@ object InOutUtils {
       .filterNot(_ startsWith forNumber)
       .map(_ split " ")
       // 51 0 AP880311-0301 1
-      .collect { case Array(number, ignore, name, relevance) => ((number.toInt, name), relevance.toInt) }
+      .collect { case Array(number, ignore, name, relevance) => ((number.toInt, name.filter(_.isLetterOrDigit)), relevance.toInt) }
       .toMap
   }
 
@@ -21,7 +21,7 @@ object InOutUtils {
     scala.io.Source.fromInputStream(inputStream).getLines()
       .map(_ split " ")
       // 51 0 AP880311-0301 1
-      .collect { case Array(number, ignore, name, relevance) => ((number.toInt, name), relevance.toInt) }
+      .collect { case Array(number, ignore, name, relevance) => ((number.toInt, name.filter(_.isLetterOrDigit)), relevance.toInt) }
       .toMap
   }
 
