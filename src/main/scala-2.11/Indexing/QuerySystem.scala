@@ -7,10 +7,10 @@ import com.github.aztek.porterstemmer.PorterStemmer
 
 import scala.collection.Map
 
-
+// Obsolete: DO NOT USE
 
 class QuerySystem(parsedstream:Stream[Document]) {
-
+/*
   val myStopWatch = new StopWatch()
 
   /*creates the inverted index*/
@@ -93,5 +93,5 @@ class QuerySystem(parsedstream:Stream[Document]) {
     val res=invertedTFIndex.getOrElse(token,List()).filter(_._1==doc)
     res.map(pair=>pair._2).sum
   }
-
+*/
 }

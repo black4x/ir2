@@ -18,16 +18,16 @@ import scala.collection.Map
   */
 object GoQuery extends App {
 
-  // Todo: Read parameters from console
-
+  // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
   val index_mode = "sharding" // sharding"
+
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(1000)
+  collection_tipster_stream = collection_tipster_stream.take(100)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -38,34 +38,41 @@ object GoQuery extends App {
   val test_queries = InOutUtils.getTestQueries(query_stream)
 
 
-  // Create the Inverted Index for the document collection
+  // Create the Inverted Index for the document collection (either normal or with document sharding)
+  // TODO: USE ONLY QuerySystemWithSharding2 or QuerySystem2 (without sharding)
   var q_sys: QuerySystem2 = null
   var q_sys_sharding: QuerySystemWithSharding2 = null
   if (index_mode == "normal") {
     q_sys = new QuerySystem2(collection_tipster_stream)
-  } else{
-    q_sys_sharding = new QuerySystemWithSharding2(collection_tipster_stream,500)
+  }
+  else {
+    q_sys_sharding = new QuerySystemWithSharding2(collection_tipster_stream,50)
   }
 
-  // TODO: submit parameter that tells which query model to use: language or term based
 
-  println("start of query")
+  println("Start of queries")
+  val myStopWatch2 = new StopWatch()
+  myStopWatch2.start
   var query_results_top_100 = Map[(Int, Int), String]()
   test_queries.foreach( query => {
-
+    // TODO: submit parameter that tells which query model to use: language or term based
     // Combine the results of each query into one Map
-    query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2)
-
+    if (index_mode == "normal"){
+      query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
+    }
+    else {
+      query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2)
+    }
   })
+  myStopWatch2.stop
+  println("Queries executed " + myStopWatch2.stopped)
 
   // Sort by Query ID
   val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
 
-  query_results_top_100_sorted.foreach(result => {
-
-    println(result)
-
-  })
+  // todo: remove and instead write to file using util.InOutUtils for that
+  println("results by query: ")
+  query_results_top_100_sorted.foreach(result => {println(result)})
 
   // Evaluate results (calculate metrics)
   val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
@@ -86,8 +93,7 @@ object GoQuery extends App {
   println("MAP is: " + meanAvgPrecision)
 
   myStopWatch.stop
-  println("total time: " + myStopWatch.stopped)
+  println("Indexing and query processing done " + myStopWatch.stopped)
 
 }
 
-//metrics_per_query._2.foreach(metric => { print(metric.toString + " ")})

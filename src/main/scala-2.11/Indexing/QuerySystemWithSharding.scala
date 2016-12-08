@@ -6,8 +6,11 @@ import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 import scala.collection.mutable.ListBuffer
 
+
+//obsolete. do not use
+
 class QuerySystemWithSharding(var wholestream:Stream[Document],chuncksize:Int = 30000) {
-    
+   /*
     var count=0
     var docShards = new ListBuffer[DocShard]()
     while ( ! wholestream.isEmpty){
@@ -80,5 +83,5 @@ class QuerySystemWithSharding(var wholestream:Stream[Document],chuncksize:Int = 
       }
       res.map(pair=>pair._2).sum
     }
-    
+    */
 }
