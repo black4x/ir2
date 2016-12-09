@@ -3,7 +3,7 @@ package Indexing
 import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
-import main.{MyTokenizer, TfTuple}
+import main.{MyTokenizer, TfTupleDocName}
 
 import scala.collection.Map
 
@@ -47,7 +47,7 @@ class DocShard2(var partstream:Stream[Document],startindex:Int) {
 
 
 
-    def tfTuples =partstream.flatMap(d =>MyTokenizer.tokenListFiltered(d.content).groupBy(identity).map{ case (tk,lst) => TfTuple2(tk,getDocID(d.name), lst.length)})
+    def tfTuples =partstream.flatMap(d =>MyTokenizer.tokenListFiltered(d.content).groupBy(identity).map{ case (tk,lst) => TfTupleDocID(tk,getDocID(d.name), lst.length)})
 
     def getDocID(docName: String): Int = {
         // must always find an entry

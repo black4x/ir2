@@ -1,13 +1,12 @@
-package main
+package obsolete
 
-import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
-import scala.collection.mutable.ListBuffer
+import main.TfTupleDocName
 
-class DocShard(var partstream:Stream[Document]) {
-    val myStopWatch = new StopWatch()
+class DocShardDoNotUse(var partstream:Stream[Document]) {
+   /* val myStopWatch = new StopWatch()
     myStopWatch.start
     /*creates the inverted index*/
     val invertedTFIndex  =tfTuples.groupBy(_.term).mapValues(_.map(tfT => (tfT.doc, tfT.count)).toList.sorted)
@@ -35,5 +34,5 @@ class DocShard(var partstream:Stream[Document]) {
     def tfTuples ={partstream.flatMap(d =>tokenListFiltered(d.content).groupBy(identity).map{ case (tk,lst) => TfTuple(tk,d.name, lst.length)})}
       
     def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
-
+*/
 }

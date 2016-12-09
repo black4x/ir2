@@ -1,15 +1,10 @@
-package main
+package obsolete
 
-import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.processing._
-import ch.ethz.dal.tinyir.util.StopWatch
-import com.github.aztek.porterstemmer.PorterStemmer
-
-import scala.collection.Map
 
 // Obsolete: DO NOT USE
 
-class QuerySystem(parsedstream:Stream[Document]) {
+class QuerySystemDoNotUse(parsedstream:Stream[Document]) {
 /*
   val myStopWatch = new StopWatch()
 

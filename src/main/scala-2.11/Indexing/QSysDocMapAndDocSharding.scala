@@ -6,7 +6,7 @@ import main.MyTokenizer
 
 import scala.collection.mutable.ListBuffer
 
-class QuerySystemWithSharding2(var wholestream:Stream[Document], chuncksize:Int = 30000) {
+class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int = 30000) {
 
   private val runtime = Runtime.getRuntime()
   import runtime.{ totalMemory, freeMemory, maxMemory }

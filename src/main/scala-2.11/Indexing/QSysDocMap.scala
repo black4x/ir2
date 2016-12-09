@@ -4,12 +4,12 @@ import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
-import main.{MyTokenizer, TfTuple}
+import main.{MyTokenizer, TfTupleDocName}
 
 import scala.collection.Map
 
 
-class QuerySystem2(parsedstream:Stream[Document]) {
+class QSysDocMap(parsedstream:Stream[Document]) {
 
   val myStopWatch = new StopWatch()
 
@@ -52,7 +52,6 @@ class QuerySystem2(parsedstream:Stream[Document]) {
   def query(queryID: Int, querystring: String): Map[(Int, Int), String]= {
     val tokenList= tokenListFiltered(querystring)
     val candidateDocs=tokenList.flatMap(token=>invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
-    //println("condidate Docs: " + candidateDocs.size)
 
     candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
       .map(result_tuple => ((queryID, result_tuple._2), getDocName(result_tuple._1._1))).toMap
@@ -65,13 +64,12 @@ class QuerySystem2(parsedstream:Stream[Document]) {
 
     // Calling the custom Tokenizer instead
     MyTokenizer.tokenListFiltered(doccontent)
-
   }
 
   /*tfTuples returns for an input stream of documents the list of postings including term frequencies*/
   def tfTuples ={
     parsedstream.flatMap(d => tokenListFiltered(d.content).groupBy(identity)
-      .map{ case (tk,lst) => TfTuple2(tk, getDocID(d.name), lst.length)})//.filter(tuple => (tuple.count > 1))
+      .map{ case (tk,lst) => TfTupleDocID(tk, getDocID(d.name), lst.length)})//.filter(tuple => (tuple.count > 1))
   }
 
   def log2(x:Double):Double= math.log(x)/math.log(2)

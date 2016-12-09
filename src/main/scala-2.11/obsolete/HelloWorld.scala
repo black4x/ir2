@@ -1,9 +1,6 @@
-package main
+package obsolete
 
 import ch.ethz.dal.tinyir.io._
-import ch.ethz.dal.tinyir.processing._
-import ch.ethz.dal.tinyir.util.StopWatch
-import com.github.aztek.porterstemmer.PorterStemmer
 
 object HelloWorld {
   def main(args: Array[String]) {
@@ -29,7 +26,7 @@ object HelloWorld {
     //Time elapsed to create documentFrequency:in 4.02963E-4 sec.
     //Time elapsed to create documentLength:in 14.519832688 sec.
 
-    val qs=new QuerySystem(parsedstream)
+    val qs=new QuerySystemDoNotUse(parsedstream)
     //println(qs.query("Strategists for Jack Kemp's presidentialcampaign say George Bush"))
 
   }

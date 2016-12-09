@@ -1,15 +1,11 @@
-package main
+package obsolete
 
-import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.processing._
-import ch.ethz.dal.tinyir.util.StopWatch
-import com.github.aztek.porterstemmer.PorterStemmer
-import scala.collection.mutable.ListBuffer
 
 
 //obsolete. do not use
 
-class QuerySystemWithSharding(var wholestream:Stream[Document],chuncksize:Int = 30000) {
+class QuerySystemWSDoNotUse(var wholestream:Stream[Document], chuncksize:Int = 30000) {
    /*
     var count=0
     var docShards = new ListBuffer[DocShard]()
