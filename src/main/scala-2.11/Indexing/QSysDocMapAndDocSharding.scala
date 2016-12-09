@@ -15,13 +15,13 @@ class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int 
   print("** Total Memory: " + runtime.totalMemory/1000000)
   println("** Max Memory:   " + runtime.maxMemory/1000000)
 
-  var docShards = new ListBuffer[DocShard2]()
+  var docShards = new ListBuffer[DocShard]()
   var counter=1
   while ( ! wholestream.isEmpty){
 
     var partstream=wholestream.take(chuncksize)
     wholestream=wholestream.drop(chuncksize)
-    val docShard= new DocShard2(partstream,counter)
+    val docShard= new DocShard(partstream,counter)
     docShards+=docShard
     counter=counter+chuncksize
 

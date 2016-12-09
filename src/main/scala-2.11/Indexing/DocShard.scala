@@ -7,7 +7,7 @@ import main.{MyTokenizer, TfTupleDocName}
 
 import scala.collection.Map
 
-class DocShard2(var partstream:Stream[Document],startindex:Int) {
+class DocShard(var partstream:Stream[Document], startindex:Int) {
 
     val myStopWatch = new StopWatch()
     myStopWatch.start
