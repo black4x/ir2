@@ -16,6 +16,7 @@ class QSysDocMapAndVBEncoding(parsedstream:Stream[XMLDocument]) {
 
   val myStopWatch = new StopWatch()
 
+  myStopWatch.start
   var docMap = Map[String, Int]()
   var documentLength = Map[Int, (Int, Int)]()
   var counter = 1
