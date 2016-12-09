@@ -8,8 +8,8 @@ import scala.collection.mutable.ListBuffer
 
 class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int = 30000) {
 
-  private val runtime = Runtime.getRuntime()
-  import runtime.{ totalMemory, freeMemory, maxMemory }
+  private val runtime = Runtime.getRuntime
+
   print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory)/1000000)
   print("** Free Memory:  " + runtime.freeMemory/1000000)
   print("** Total Memory: " + runtime.totalMemory/1000000)
@@ -17,7 +17,7 @@ class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int 
 
   var docShards = new ListBuffer[DocShard]()
   var counter=1
-  while ( ! wholestream.isEmpty){
+  while ( wholestream.nonEmpty){
 
     var partstream=wholestream.take(chuncksize)
     wholestream=wholestream.drop(chuncksize)
@@ -37,8 +37,8 @@ class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int 
     var loop = 0
     var filteredDoc=List[String]()
     while(loop < docShards.length) {
-      val filteredDoc = docShards(loop).docMap.filter(doc_tuple => (doc_tuple._2 == docID)).map(relevant_doc => relevant_doc._1).toList
-      if(filteredDoc.length>0){
+      val filteredDoc = docShards(loop).docMap.filter(doc_tuple => doc_tuple._2 == docID).keys.toList
+      if(filteredDoc.nonEmpty){
         return filteredDoc.head
       }
       loop = loop + 1
@@ -65,7 +65,7 @@ class QSysDocMapAndDocSharding(var wholestream:Stream[Document], chuncksize:Int 
   def query(queryID:Int,querystring:String): Map[(Int, Int), String]={
     val tokenList= MyTokenizer.tokenListFiltered(querystring)
     var candidateDocs=Seq[Int]()
-    for (loop <- 0 until docShards.length) {
+    for (loop <- docShards.indices) {
       val candidateDocsShard=tokenList.flatMap(token=>docShards(loop).invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
       candidateDocs=candidateDocs.union(candidateDocsShard)
     }
