@@ -66,8 +66,6 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
   def query(queryID:Int,querystring:String): Map[(Int, Int), String]={
     val tokenList= MyTokenizer.tokenListFiltered(querystring)
 
-    println("query: " + queryID)
-
     // For each token and shard, get all docs with their term frequencies and uncompress the Gaps back to DocIDs
     var candidatePostLists = Map[String, List[(Int, Int)]]()
     tokenList.foreach(token => {
@@ -85,7 +83,7 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
       }
     })
 
-    candidatePostLists.foreach(x => println(x))
+    //candidatePostLists.foreach(x => println(x))
 
     // Get distinct DocIDs for all candidate posting lists
     var candidateDocIDs = ListBuffer[Int]()
