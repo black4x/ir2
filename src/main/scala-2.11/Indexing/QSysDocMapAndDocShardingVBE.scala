@@ -55,13 +55,13 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
     var notFound = true
     var res=(0,0)
     while(res==(0,0) && loop<docShards.length){
-      res=docShards(loop ).documentLength.getOrElse(doc,(0,0))
+      res=docShards(loop ).documentMapWithTokenCount.getOrElse(doc,(0,0))
       loop=loop+1
     }
     res
   }
 
-  val nDocs=docShards.toList.map(x=>x.documentLength.size).sum
+  val nDocs=docShards.toList.map(x=>x.documentMapWithTokenCount.size).sum
 
   def query(queryID:Int,querystring:String): Map[(Int, Int), String]={
     val tokenList= MyTokenizer.tokenListFiltered(querystring)
@@ -91,6 +91,7 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
       candidateDocIDs += pair._1
     })))
     val candidateDocIDsDistinct: List[Int] = candidateDocIDs.toList.distinct
+    println("Query " + queryID + " with nr of candidates: " + candidateDocIDsDistinct.size)
 
     // Call the scoring method, sort them by score, take only the best 100, and return them in the right output format
     candidateDocIDsDistinct.map(docID => (docID, scoringTfIdf(tokenList, docID, candidatePostLists))).sortBy(-_._2).zip(Stream from 1).take(100)

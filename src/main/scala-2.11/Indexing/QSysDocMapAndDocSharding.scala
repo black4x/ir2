@@ -76,7 +76,7 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
       val candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List())).map(pair => pair._1).distinct
       candidateDocs = candidateDocs.union(candidateDocsShard)
     }
-    println(candidateDocs.map(candidateDoc => (candidateDoc, scoring(tokenList, candidateDoc))).sortBy(-_._2))
+    //println(candidateDocs.map(candidateDoc => (candidateDoc, scoring(tokenList, candidateDoc))).sortBy(-_._2))
     val res1 =
       if (scoringModel == "lm") {
         candidateDocs.map(candidateDoc => (candidateDoc, languageModelScoring(candidateDoc, 0.5f, tokenList, candidateDocs))).sortBy(-_._2).zip(Stream from 1).take(100)

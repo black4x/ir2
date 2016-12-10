@@ -17,15 +17,16 @@ import scala.collection.Map
 object GoQuery extends App {
 
   // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
-  val index_mode = "sharding" // normal"
+  val DOC_SHARDING = "shard" // normal"
   val VALIDATION_MODE = "vali"
   val TEST_MODE = "test"
   val TERM_BASED = "t" // t = term based, l = language model
   val LANGUAGE = "l"
 
   // Set default parameters
-  var runMode = TEST_MODE //VALIDATION_MODE
+  var runMode = TEST_MODE//VALIDATION_MODE
   var model = TERM_BASED
+  var indexMode = DOC_SHARDING
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -38,18 +39,26 @@ object GoQuery extends App {
   //relevance_judgement.foreach(rj => println(rj))
 
   // Get list of query IDs and their titles (query ID needed for submission format!)
-  val query_stream = DocStream.getStream("data/questions-descriptions.txt")
-  val test_queries = InOutUtils.getTestQueries(query_stream)
+  val query_stream_validation = DocStream.getStream("data/questions-descriptions.txt")
+  val query_stream_test = DocStream.getStream("data/test-questions.txt")
+  var queries = List[(Int, String)]()
+
+  if (runMode == VALIDATION_MODE) {
+    queries = InOutUtils.getValidationQueries(query_stream_validation)
+  }
+  else {
+    queries = InOutUtils.getTestQueries(query_stream_test)
+  }
 
 
   // Create the Inverted Index for the document collection (either normal or with document sharding)
   var q_sys: QSysDocMap = null
-  var q_sys_sharding: QSysDocMapAndDocShardingVBE = null
-  if (index_mode == "normal") {
+  var q_sys_sharding: QSysDocMapAndDocSharding = null
+  if (indexMode == "normal") {
     q_sys = new QSysDocMap(collection_tipster_stream)
   }
   else {
-    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,collection_tipster_stream.length/2)
+    q_sys_sharding = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/5)
   }
 
 
@@ -57,10 +66,10 @@ object GoQuery extends App {
   val myStopWatch2 = new StopWatch()
   myStopWatch2.start
   var query_results_top_100 = Map[(Int, Int), String]()
-  test_queries.foreach( query => {
+  queries.foreach( query => {
     // TODO: submit parameter that tells which query model to use: language or term based
     // Combine the results of each query into one Map
-    if (index_mode == "normal"){
+    if (indexMode == "normal"){
       query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
     }
     else {
@@ -73,10 +82,10 @@ object GoQuery extends App {
   // Sort by Query ID
   val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
 
-  // todo: remove and instead write to file using util.InOutUtils for that
+
+  //todo: remove
   println("results by query: ")
   query_results_top_100_sorted.foreach(result => {println(result)})
-
 
 
   if (runMode == VALIDATION_MODE) {
@@ -103,7 +112,6 @@ object GoQuery extends App {
     val filename = "ranking-" + model + "-28.run"
     InOutUtils.saveResults(query_results_top_100_sorted, filename)
   }
-
 
 
   myStopWatch.stop
