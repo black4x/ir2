@@ -13,6 +13,8 @@ class QSysDocMap(parsedstream:Stream[Document]) {
 
   val myStopWatch = new StopWatch()
 
+  val scoring = "tm"//tm, lm
+
   /*Map Doc Names to Integer Numbers*/
   myStopWatch.start
   val docMap: Map[String, Int] = parsedstream.map(d => d.name).zip(Stream from 1).map(doc_tuple =>  doc_tuple._1 -> doc_tuple._2).toMap
@@ -42,8 +44,14 @@ class QSysDocMap(parsedstream:Stream[Document]) {
   //   println(documentFrequency.toList.sortBy(-_._2))
 
   myStopWatch.start
+
+  var numberOfTokensInCollection = 0;
   //stores doc0->(doclength,#distinct words) Doc ID -> Doc Length, #distinct words
-  var documentLength = parsedstream.map(d =>(getDocID(d.name),(tokenListFiltered(d.content).length,tokenListFiltered(d.content).distinct.length))).toMap //Map from doc to its length
+  var documentLength = parsedstream.map(d =>{
+    val filteredTokens = tokenListFiltered(d.content)
+    numberOfTokensInCollection += filteredTokens.length
+    (getDocID(d.name),(filteredTokens.length,filteredTokens.distinct.length))
+  }).toMap //Map from doc to its length
   myStopWatch.stop
   println("Time elapsed to create documentLength:%s".format(myStopWatch.stopped))
   val nDocs=documentLength.size
@@ -53,9 +61,29 @@ class QSysDocMap(parsedstream:Stream[Document]) {
     val tokenList= tokenListFiltered(querystring)
     val candidateDocs=tokenList.flatMap(token=>invertedTFIndex.getOrElse(token,List())).map(pair=>pair._1).distinct
 
+    if (scoring == "lm"){
+      return candidateDocs.map(candidateDoc=>(candidateDoc,languageModelScoring(candidateDoc, tokenList,candidateDocs))).sortBy(-_._2).zip(Stream from 1).take(100)
+        .map(result_tuple => ((queryID, result_tuple._2), getDocName(result_tuple._1._1))).toMap
+    }
+
     candidateDocs.map(candidateDoc=>(candidateDoc,scoring(tokenList,candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
       .map(result_tuple => ((queryID, result_tuple._2), getDocName(result_tuple._1._1))).toMap
   }
+
+  def languageModelScoring(docId: Int, queryTokenList: Seq[String], candidateDocs: Seq[Int]) = {
+    val lambda = 0.6f
+    queryTokenList.map(token => {
+      val tokenFrequencyInDoc = invertedTFIndexReturnTF(token, docId).toDouble
+      val numberOfTokensInDoc = documentLength(docId)._1.toDouble
+      lambda * (tokenFrequencyInDoc / numberOfTokensInDoc) + (1 - lambda) * lmSmoothingNumber(token, candidateDocs)
+    }).product
+  }
+
+  def lmSmoothingNumber(token: String, candidateDocs: Seq[Int]): Double =
+    termFrequencyInCollection(token, candidateDocs).toDouble / numberOfTokensInCollection.toDouble
+
+  def termFrequencyInCollection(token: String, candidateDocs: Seq[Int]): Int =
+    candidateDocs.map(docId => invertedTFIndexReturnTF(token, docId)).sum
 
 
   /*Input is the content of doc, output a list of tokens without stopwords and stemmed*/
@@ -86,9 +114,8 @@ class QSysDocMap(parsedstream:Stream[Document]) {
 
 
   /*Given a document and a token, this function returns the term frequency. Works also if token is not in the doc => tf=0*/
-  def invertedTFIndexReturnTF(token:String,doc:Int)={
-    val res=invertedTFIndex.getOrElse(token,List()).filter(_._1==doc)
-    res.map(pair=>pair._2).sum
+  def invertedTFIndexReturnTF(token:String,doc:Int) : Int ={
+    invertedTFIndex.getOrElse(token,List()).filter(_._1==doc).head._2
   }
 
   /* Get the interger number previously assigned to each Doc Name*/
