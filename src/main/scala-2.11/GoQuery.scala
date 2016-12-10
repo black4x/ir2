@@ -17,7 +17,7 @@ import scala.collection.Map
 object GoQuery extends App {
 
   // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
-  val index_mode = "sharding" // normal"
+  val index_mode = "normal"//"sharding" // normal"
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
