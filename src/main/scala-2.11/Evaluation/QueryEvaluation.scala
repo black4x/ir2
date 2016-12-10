@@ -30,7 +30,7 @@ class QueryEvaluation(val relevance_judgement: Map[(Int, String), Int], val quer
       var tp = 0.0
       results_of_single_query.foreach(result_tuple => {
         if (all_relevant_docs_for_query.contains(result_tuple._2)){
-          println("matching doc: " + result_tuple._2)
+         //println("matching doc: " + result_tuple._2)
           tp += 1
         }
       })
