@@ -31,6 +31,7 @@ object InOutUtils {
     // this crashes as there are invalid xml tags!!
     //val query_tipster_parse = new TipsterParse(DocStream.getStream("data/questions-descriptions.txt"))
 
+
     //dummy. query 999 does not exist, just for test
     return List((51, "Airbus Subsidies"), (52, "South African Sanctions"))
 
