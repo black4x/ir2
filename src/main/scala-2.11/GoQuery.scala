@@ -18,12 +18,20 @@ object GoQuery extends App {
 
   // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
   val index_mode = "sharding" // normal"
+  val VALIDATION_MODE = "vali"
+  val TEST_MODE = "test"
+  val TERM_BASED = "t" // t = term based, l = language model
+  val LANGUAGE = "l"
+
+  // Set default parameters
+  var runMode = TEST_MODE //VALIDATION_MODE
+  var model = TERM_BASED
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream//.take(10000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(1000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -41,7 +49,7 @@ object GoQuery extends App {
     q_sys = new QSysDocMap(collection_tipster_stream)
   }
   else {
-    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,collection_tipster_stream.length/10)
+    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,collection_tipster_stream.length/2)
   }
 
 
@@ -69,23 +77,34 @@ object GoQuery extends App {
   println("results by query: ")
   query_results_top_100_sorted.foreach(result => {println(result)})
 
-  // Evaluate results (calculate metrics)
-  val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
-  myQE.calculateMetrics()
 
-  val metrics = myQE.getQueryMetrics()
-  val meanAvgPrecision = myQE.getMAP()
 
-  metrics.foreach(metrics_per_query => {
-    print("Query: " + metrics_per_query._1 + " -> ")
-    print("Precision: " + metrics_per_query._2(0))
-    print(", Recall: " + metrics_per_query._2(1))
-    print(", F1: " + metrics_per_query._2(2))
-    print(", Avg Precision: " + metrics_per_query._2(3))
-    println(" ")
-  })
+  if (runMode == VALIDATION_MODE) {
+    // Evaluate results (calculate metrics)
+    val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
+    myQE.calculateMetrics()
 
-  println("MAP is: " + meanAvgPrecision)
+    val metrics = myQE.getQueryMetrics()
+    val meanAvgPrecision = myQE.getMAP()
+
+    metrics.foreach(metrics_per_query => {
+      print("Query: " + metrics_per_query._1 + " -> ")
+      print("Precision: " + metrics_per_query._2(0))
+      print(", Recall: " + metrics_per_query._2(1))
+      print(", F1: " + metrics_per_query._2(2))
+      print(", Avg Precision: " + metrics_per_query._2(3))
+      println(" ")
+    })
+
+    println("MAP is: " + meanAvgPrecision)
+  }
+  // Write results of the 10 queries to file if run mode is TEST
+  else{
+    val filename = "ranking-" + model + "-28.run"
+    InOutUtils.saveResults(query_results_top_100_sorted, filename)
+  }
+
+
 
   myStopWatch.stop
   println("Indexing and query processing done " + myStopWatch.stopped)

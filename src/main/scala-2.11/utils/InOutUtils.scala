@@ -59,9 +59,21 @@ object InOutUtils {
     //testQueries.foreach(x => println(x))
     return testQueries.toList
 
-    //dummy. query 999 does not exist, just for test
-    //return List((51, "Airbus Subsidies"), (52, "South African Sanctions"))
-
   }
+
+  def saveResults(result: Map[(Int, Int), String], filename: String) = {
+    import java.io._
+    val file = new File(filename)
+    val bw = new BufferedWriter(new FileWriter(file))
+    var result_line = new String
+    result foreach { case (key, docName) => {
+      result_line = key._1 + " " + key._2 + " " + docName + "\n"
+      bw.write(result_line)
+    }
+    }
+    bw.close()
+  }
+
+
 
 }

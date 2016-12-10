@@ -10,6 +10,8 @@ import scala.collection.mutable.{BitSet, ListBuffer}
 
 class DocShardVBE(var partstream:Stream[Document], startindex:Int) {
 
+    println("Start Index of shard: " + startindex )
+
     val myStopWatch = new StopWatch()
     myStopWatch.start
 

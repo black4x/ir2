@@ -133,19 +133,4 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
   def log2(x:Double):Double= math.log(x)/math.log(2)
 
 
- /* /*Given a document and a token, this function returns the term frequency. Works also if token is not in the doc => tf=0*/
-  def invertedTFIndexReturnTF(token:String,doc:Int)={
-    var loop =0
-    var res= Seq[(Array[BitSet], Int)]()
-
-    while(res.isEmpty && loop<docShards.length){
-      // res=docShards(loop).invertedTFIndex.getOrElse(token,List())
-      res = docShards(loop).invertedTFIndexCmp.getOrElse(token,List()).filter(_._1==doc)
-      loop=loop+1
-
-    }
-    res.map(pair=>pair._2).sum
-  }
-*/
-
 }
