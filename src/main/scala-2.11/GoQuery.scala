@@ -24,7 +24,7 @@ object GoQuery extends App {
 
   val path : String = "data"
   var collection_tipster_stream = new TipsterStream(path).stream
-  collection_tipster_stream = collection_tipster_stream.take(20000)
+  collection_tipster_stream = collection_tipster_stream.take(40000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -42,7 +42,7 @@ object GoQuery extends App {
     q_sys = new QSysDocMap(collection_tipster_stream)
   }
   else {
-    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,5000)
+    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,10000)
   }
 
 
