@@ -23,7 +23,7 @@ object GoQuery extends App {
   myStopWatch.start
 
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream//.take(10000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(50000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -41,7 +41,7 @@ object GoQuery extends App {
     q_sys = new QSysDocMap(collection_tipster_stream)
   }
   else {
-    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,collection_tipster_stream.length/10)
+    q_sys_sharding = new QSysDocMapAndDocShardingVBE(collection_tipster_stream,collection_tipster_stream.length/100)
   }
 
 
