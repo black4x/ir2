@@ -1,3 +1,3 @@
 package Indexing
 
-case class LazyTokenDocItem(term: String, docInt: Int, tf: Int)
+case class LazyTokenDocItem(termHash: Int, docInt: Int, tf: Int)

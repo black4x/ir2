@@ -9,9 +9,9 @@ import scala.collection.immutable.HashMap
 
 object LazyIndex extends App {
 
-  type InvIndex = Map[String, Stream[LazyDocItem]]
+  type InvIndex = Map[Int, Stream[LazyDocItem]]
 
-  val N = 10000
+  val N = 100000
 
   // filtering magic numbers
   val docFrequencyMax = N / 10
@@ -31,7 +31,7 @@ object LazyIndex extends App {
 
   var stream = new TipsterStream("data").stream.take(N)
 
-  var invIndexMap: InvIndex = new HashMap[String, Stream[LazyDocItem]]
+  var invIndexMap: InvIndex = new HashMap[Int, Stream[LazyDocItem]]
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -45,17 +45,16 @@ object LazyIndex extends App {
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
 
-  // TODO insted of tokens -> Int ?
   def invertedIndex(stream: Stream[XMLDocument]): InvIndex =
     stream.flatMap(doc => {
       filter(doc.content)
         .groupBy(identity)
         .filter(x => x._2.length > tokenFrequencyMin)
         .map {
-          case (tk, lst) => LazyTokenDocItem(tk, doc.name.hashCode, lst.length)
+          case (tk, lst) => LazyTokenDocItem(tk.hashCode, doc.name.hashCode, lst.length)
         }
     })
-      .groupBy(_.term)
+      .groupBy(_.termHash)
       .filter(q => q._2.size < docFrequencyMax)
       .mapValues(_.map(tokenDocItem => LazyDocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
 
@@ -65,13 +64,17 @@ object LazyIndex extends App {
     val usedMem = (runtime.totalMemory - runtime.freeMemory) / (1024 * 1024)
     val maxMem = runtime.maxMemory / (1024 * 1024)
     val p = usedMem.toDouble / maxMem.toDouble * 100
-
-    println(" memory used:  " + f"$p%2.0f" + " % ")
+    val warning = if (p > 90) {
+      " !!!!!!!! > 90% "
+    } else {
+      ""
+    }
+    println(" memory used:  " + f"$p%2.0f" + "% " + warning)
   }
 
   def printStat(currentShard: Int): Unit = {
     val p = (currentShard / shardsNumber.toDouble) * 100
-    print(f"$p%2.0f" + " % ")
+    print(f"$p%2.0f" + "% ")
     printUsedMem()
   }
 
