@@ -10,6 +10,8 @@ import scala.collection.mutable.{BitSet, ListBuffer}
 
 class DocShardVBE(var partstream:Stream[Document], startindex:Int) {
 
+    println("Start Index of shard: " + startindex )
+
     val myStopWatch = new StopWatch()
     myStopWatch.start
 
@@ -17,17 +19,21 @@ class DocShardVBE(var partstream:Stream[Document], startindex:Int) {
     //    val documentLength = partstream.map(d =>(getDocID(d.name),(MyTokenizer.tokenListFiltered(d.content).length,MyTokenizer.tokenListFiltered(d.content).distinct.length))).toMap //Map from doc to its length
 
     var docMap=Map[String, Int]()
-    var documentLength=Map[Int, (Int, Int)]()
+    var documentMapWithTokenCount=Map[Int, (Int, Int)]()
     var counter=startindex
+    var numberOfAllTokens = 0;
 
-    partstream.foreach{ doc =>
-        docMap +=((doc.name,counter))
-        counter=counter+1
-        documentLength+=(getDocID(doc.name)->(MyTokenizer.tokenListFiltered(doc.content).length,MyTokenizer.tokenListFiltered(doc.content).distinct.length))
+    partstream.foreach { doc =>
+        docMap += ((doc.name, counter))
+        counter = counter + 1
+        val tokensInDoc = MyTokenizer.tokenListFiltered(doc.content)
+        val tokensNumber = tokensInDoc.length
+        documentMapWithTokenCount += (getDocID(doc.name) -> (tokensNumber, tokensInDoc.distinct.length))
+        numberOfAllTokens += tokensNumber
     }
     myStopWatch.stop
-    println("Time elapsed to create docMap and documentLength:%s documentLength.size:%d".format(myStopWatch.stopped,documentLength.size))
-    val nDocs=documentLength.size
+    println("Time elapsed to create docMap and documentLength:%s documentLength.size:%d".format(myStopWatch.stopped,documentMapWithTokenCount.size))
+    val nDocs=documentMapWithTokenCount.size
 
 
     /*creates the inverted index*/

@@ -55,13 +55,13 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
     var notFound = true
     var res=(0,0)
     while(res==(0,0) && loop<docShards.length){
-      res=docShards(loop ).documentLength.getOrElse(doc,(0,0))
+      res=docShards(loop ).documentMapWithTokenCount.getOrElse(doc,(0,0))
       loop=loop+1
     }
     res
   }
 
-  val nDocs=docShards.toList.map(x=>x.documentLength.size).sum
+  val nDocs=docShards.toList.map(x=>x.documentMapWithTokenCount.size).sum
 
   def query(queryID:Int,querystring:String): Map[(Int, Int), String]={
     val tokenList= MyTokenizer.tokenListFiltered(querystring)
@@ -91,6 +91,7 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
       candidateDocIDs += pair._1
     })))
     val candidateDocIDsDistinct: List[Int] = candidateDocIDs.toList.distinct
+    println("Query " + queryID + " with nr of candidates: " + candidateDocIDsDistinct.size)
 
     // Call the scoring method, sort them by score, take only the best 100, and return them in the right output format
     candidateDocIDsDistinct.map(docID => (docID, scoringTfIdf(tokenList, docID, candidatePostLists))).sortBy(-_._2).zip(Stream from 1).take(100)
@@ -132,20 +133,5 @@ class QSysDocMapAndDocShardingVBE(var wholestream:Stream[Document], chuncksize:I
 
   def log2(x:Double):Double= math.log(x)/math.log(2)
 
-
- /* /*Given a document and a token, this function returns the term frequency. Works also if token is not in the doc => tf=0*/
-  def invertedTFIndexReturnTF(token:String,doc:Int)={
-    var loop =0
-    var res= Seq[(Array[BitSet], Int)]()
-
-    while(res.isEmpty && loop<docShards.length){
-      // res=docShards(loop).invertedTFIndex.getOrElse(token,List())
-      res = docShards(loop).invertedTFIndexCmp.getOrElse(token,List()).filter(_._1==doc)
-      loop=loop+1
-
-    }
-    res.map(pair=>pair._2).sum
-  }
-*/
 
 }
