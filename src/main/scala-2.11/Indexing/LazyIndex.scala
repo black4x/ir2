@@ -28,8 +28,8 @@ object LazyIndex extends App {
 
   var stream = new TipsterStream(path).stream.take(TOTAL_NUMBER)
 
-  // token_id -> (token, raw tokens count in document)
-  var docInfoMap = Map[Int, (String, Int)]()
+  // token_id -> (token, raw tokens count in document, distinct tokens in doc)
+  var docInfoMap = Map[Int, (String, Int, Int)]()
 
   // token_id -> Stream of DocItem(docInt: Int, tf: Int)
   var invIndexMap = Map[Int, Stream[DocItem]]()
@@ -50,6 +50,7 @@ object LazyIndex extends App {
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
   println("start queries")
 
+  myStopWatch.start
 
   // TODO: For now take only first query for test (it reads all query but we do take(1) later
   //val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
@@ -63,6 +64,9 @@ object LazyIndex extends App {
   allQueries.foreach( q => {
     queryResults = queryResults ++ query(q, termModelScoring)
   })
+
+  myStopWatch.stop
+  println("Queries executed: " + myStopWatch.stopped)
 
   // Sort by Query ID
   val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
@@ -99,7 +103,7 @@ object LazyIndex extends App {
   def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     //println("scoring doc: " + docId)
     queryTokenList.map(token =>
-      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDistinctTokensNumberForDoc(docId))) *
+      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDocDistinctTkn(docId) /*getDistinctTokensNumberForDoc(docId)*/)) *
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
   }
@@ -130,7 +134,8 @@ object LazyIndex extends App {
   def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
     stream.flatMap(doc => {
       val filteredContent = filter(doc.content)
-      docInfoMap += (doc.name.hashCode -> (doc.name, filteredContent.length))
+      val distinctTokensInDoc: Int = filteredContent.distinct.length
+      docInfoMap += (doc.name.hashCode -> (doc.name, filteredContent.length, distinctTokensInDoc))
       filteredContent.groupBy(identity)
         //.filter(x => x._2.length > tokenFrequencyMin)
         .map {
@@ -169,13 +174,16 @@ object LazyIndex extends App {
   }
 
   def getDocNameByHashCode(hashCode: Int): String =
-    docInfoMap.getOrElse(hashCode, ("", 0))._1
+    docInfoMap.getOrElse(hashCode, ("", 0,0))._1
 
   def sumAllTokens(): Int =
     docInfoMap.map(x => x._2._2).sum
 
   def getDocLength(docId: Int): Int =
-    docInfoMap.getOrElse(docId, 0 -> 0)._2
+    docInfoMap.getOrElse(docId, ("",0,0))._2
+
+  def getDocDistinctTkn(docId: Int): Int =
+    docInfoMap.getOrElse(docId, ("",0,0))._3
 
   def query(query: (Int, String), scoringFunction: (Int, Seq[Int]) => Double): Map[(Int, Int), String] = {
     val content = query._2
