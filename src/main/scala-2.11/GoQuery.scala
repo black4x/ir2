@@ -1,7 +1,7 @@
 import java.io.FileInputStream
 
 import Evaluation.QueryEvaluation
-import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysDocMapAndDocShardingVBE}
+import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysDocMapAndDocShardingVBE, QSysNoIndex}
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
 import ch.ethz.dal.tinyir.processing
 import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
@@ -17,7 +17,9 @@ import scala.collection.Map
 object GoQuery extends App {
 
   // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
-  val DOC_SHARDING = "shard" // normal"
+  val DOC_SHARDING = "shard"
+  val INDEX_NORMAL = "normal"
+  val NO_INDEX = "noindex"
   val VALIDATION_MODE = "vali"
   val TEST_MODE = "test"
   val TERM_BASED = "t" // t = term based, l = language model
@@ -26,7 +28,7 @@ object GoQuery extends App {
   // Set default parameters
   var runMode = TEST_MODE//VALIDATION_MODE
   var model = TERM_BASED
-  var indexMode = DOC_SHARDING
+  var indexMode = DOC_SHARDING //INDEX_NORMAL, NO_INDEX
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -54,11 +56,15 @@ object GoQuery extends App {
   // Create the Inverted Index for the document collection (either normal or with document sharding)
   var q_sys: QSysDocMap = null
   var q_sys_sharding: QSysDocMapAndDocSharding = null
-  if (indexMode == "normal") {
+  var q_sys_noindex: QSysNoIndex = null
+  if (indexMode == INDEX_NORMAL) {
     q_sys = new QSysDocMap(collection_tipster_stream)
   }
-  else {
+  else if (indexMode == DOC_SHARDING){
     q_sys_sharding = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/5)
+  }
+  else if (indexMode == NO_INDEX){
+    q_sys_noindex = new QSysNoIndex(collection_tipster_stream)
   }
 
 
