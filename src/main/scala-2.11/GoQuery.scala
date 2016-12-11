@@ -28,7 +28,7 @@ object GoQuery extends App {
   // Set default parameters
   var runMode = TEST_MODE//VALIDATION_MODE
   var model = TERM_BASED
-  var indexMode = DOC_SHARDING //INDEX_NORMAL, NO_INDEX
+  var indexMode = NO_INDEX//DOC_SHARDING //INDEX_NORMAL, NO_INDEX
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -75,11 +75,14 @@ object GoQuery extends App {
   queries.foreach( query => {
     // TODO: submit parameter that tells which query model to use: language or term based
     // Combine the results of each query into one Map
-    if (indexMode == "normal"){
+    if (indexMode == INDEX_NORMAL){
       query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
     }
-    else {
+    else if (indexMode == DOC_SHARDING) {
       query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2)
+    }
+    else if (indexMode == NO_INDEX) {
+      query_results_top_100 = query_results_top_100 ++ q_sys_noindex.query(query._1, query._2)
     }
   })
   myStopWatch2.stop
