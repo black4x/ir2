@@ -8,50 +8,31 @@ import com.github.aztek.porterstemmer.PorterStemmer
 import utils.InOutUtils
 
 import scala.collection.Map
-import scala.collection.immutable.HashMap
+
+case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
+
+case class DocItem(docInt: Int, tf: Int)
 
 object LazyIndex extends App {
 
-  //  if (!args.isEmpty) {
-  //    baseDir = args(0)
-  //    classifierType = args(1)
-  //    runMode = args(2)
-  //  }
-
-  type InvIndex = Map[Int, Stream[LazyDocItem]]
-
   val N = 10000
+  // global number of docs to take into consideration MAX = 100000
   val path = "data"
 
-  // filtering magic numbers
-  //val docFrequencyMax = N / 10
-  // if doc is very frequent it does not go into consideration
-  //val tokenLengthMin = 2
-  // minimal length of token size, otherwise token is ignored
-  //val tokenFrequencyMin = 0 // minimal token frequency in doc, if less, doc with that TF skipped
-
-  //sharding magic numbers
-
-  // Shard Size in % of total docs number
-  val shardSizeInProcents = 10
-  val shardsNumber = (N * (shardSizeInProcents.toDouble / 100)).toInt
+  //Sharding magic numbers
+  val shardSizeInPercents = 10
+  // % of total docs number
+  val shardsNumber = (N * (shardSizeInPercents.toDouble / 100)).toInt
   val shardSize = N / shardsNumber
 
   println(shardsNumber + " shards")
 
   var stream = new TipsterStream(path).stream.take(N)
 
-
-  // Get list of query IDs and their titles (query ID needed for submission format!)
-  val query_stream_validation = DocStream.getStream(path + "/questions-descriptions.txt")
-  val query_stream_test = DocStream.getStream(path + "/test-questions.txt")
-
-  // **** language model scoring vals:
-
   // token -> raw tokens count in document
   var docInfoMap = Map[Int, (String, Int)]()
 
-  var invIndexMap: InvIndex = new HashMap[Int, Stream[LazyDocItem]]
+  var invIndexMap = Map[Int, Stream[DocItem]]()
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -66,17 +47,18 @@ object LazyIndex extends App {
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
   println("start queries")
 
-  val query = InOutUtils.getValidationQueries(query_stream_validation).head
 
   // TODO all queries !
-  val r = query(query._1, query._2)
-  showResults(r)
+  val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
+  val results = query(oneQuery, termModelScoring)
+  showResults(results)
 
   println("results by query: ")
-  r.foreach(result => {
+  results.foreach(result => {
     println(result)
   })
 
+  // ----------------------- END !!!! ----------------------------------------
 
   def languageModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     val lambda = 0.6f
@@ -102,8 +84,6 @@ object LazyIndex extends App {
   def termFrequencyInCollection(tokenId: Int): Int =
     invIndexMap.getOrElse(tokenId, Stream.Empty).map(item => item.tf).sum
 
-  // ------------------------ def: -------------------------------------
-
   def getTermFrequencyFromInvIndex(tokenId: Int, docId: Int): Int =
     invIndexMap.getOrElse(tokenId, Stream.Empty)
       .find(item => item.docInt == docId) match {
@@ -111,30 +91,30 @@ object LazyIndex extends App {
       case None => 0
     }
 
-  def getCandidateDocumensIds(queryTokensIds: Seq[Int]): Set[Int] =
+  def getCandidateDocumentsIds(queryTokensIds: Seq[Int]): Set[Int] =
     queryTokensIds.map(tokenId => {
       invIndexMap.getOrElse(tokenId, Stream.Empty).toSet
     }).reduce(_ ++ _).map(x => x.docInt)
 
-  def createInvertedIndex(stream: Stream[XMLDocument]): InvIndex =
+  def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
     stream.flatMap(doc => {
       val filteredContent = filter(doc.content)
       docInfoMap += (doc.name.hashCode -> (doc.name, filteredContent.length))
       filteredContent.groupBy(identity)
         //.filter(x => x._2.length > tokenFrequencyMin)
         .map {
-        case (tk, lst) => LazyTokenDocItem(tk.hashCode, doc.name.hashCode, lst.length)
+        case (tk, lst) => TermDocItem(tk.hashCode, doc.name.hashCode, lst.length)
       }
     })
       .groupBy(_.termHash)
       // .filter(q => q._2.size < docFrequencyMax)
-      .mapValues(_.map(tokenDocItem => LazyDocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
+      .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
 
   def filter(content: String): Seq[String] = StopWords.filterOutSW(Tokenizer.tokenize(content))
     //.filter(t => t.length > tokenLengthMin)
     .map(v => PorterStemmer.stem(v))
 
-  def merge(i1: InvIndex, i2: InvIndex): InvIndex =
+  def merge(i1: Map[Int, Stream[DocItem]], i2: Map[Int, Stream[DocItem]]): Map[Int, Stream[DocItem]] =
     i1 ++ i2.map { case (token, stream) => token -> (stream ++ i1.getOrElse(token, Stream.Empty)).distinct }
 
   def printUsedMem(): Unit = {
@@ -166,12 +146,14 @@ object LazyIndex extends App {
   def getDocLength(docId: Int): Int =
     docInfoMap.getOrElse(docId, 0 -> 0)._2
 
-  def query(queryID: Int, content: String): Map[(Int, Int), String] = {
+  def query(query: (Int, String), scoringFunction: (Int, Seq[Int]) => Double): Map[(Int, Int), String] = {
+    val content = query._2
+    val queryID = query._1
     val queryTokensIds = filter(content).map(token => token.hashCode)
-    val candidatesIds = getCandidateDocumensIds(queryTokensIds)
+    val candidatesIds = getCandidateDocumentsIds(queryTokensIds)
 
-    // ------ Language Model Scoring
-    val results = candidatesIds.map(docId => docId -> termModelScoring(docId, queryTokensIds))
+    // Scoring
+    val results = candidatesIds.map(docId => docId -> scoringFunction(docId, queryTokensIds))
       .toSeq.sortBy(x => x._2).take(100).zip(Stream from 1)
 
     results.map(x => ((queryID, x._2), getDocNameByHashCode(x._1._1))).toMap
@@ -202,6 +184,6 @@ object LazyIndex extends App {
 
   def log2(x: Double): Double = math.log(x) / math.log(2)
 
-  // Write results of the 10 queries to file if run mode is TEST
-
 }
+
+
