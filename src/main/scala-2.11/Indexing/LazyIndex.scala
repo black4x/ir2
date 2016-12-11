@@ -27,14 +27,16 @@ object LazyIndex extends App {
 
   var stream = new TipsterStream(path).stream.take(TOTAL_NUMBER)
 
-  // token -> raw tokens count in document
+  // token_id -> (token, raw tokens count in document)
   var docInfoMap = Map[Int, (String, Int)]()
 
+  // token_id -> Stream of DocItem(docInt: Int, tf: Int)
   var invIndexMap = Map[Int, Stream[DocItem]]()
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
+  // ONLY ONE time runs through entire collection
   for (i <- 0 to shardsNumber) {
     val streamChunk = stream.slice(i * shardSize, i * shardSize + shardSize)
     invIndexMap = merge(invIndexMap, createInvertedIndex(streamChunk))
@@ -46,7 +48,7 @@ object LazyIndex extends App {
   println("start queries")
 
 
-  // TODO all queries !
+  // TODO all queries ! now take only first query for test with id =51
   val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
   val results = query(oneQuery, termModelScoring)
   showResults(results)
@@ -56,7 +58,7 @@ object LazyIndex extends App {
     println(result)
   })
 
-  // ----------------------- END !!!! ----------------------------------------
+  // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
   def languageModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     val lambda = 0.6f
@@ -158,8 +160,6 @@ object LazyIndex extends App {
   }
 
   def showResults(query_results_top_100: Map[(Int, Int), String]): Unit = {
-    //    if (runMode == VALIDATION_MODE) {
-    // Evaluate results (calculate metrics)
     val relevance_judgement_stream = DocStream.getStream(path + "/relevance-judgements.csv")
     val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
     val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
