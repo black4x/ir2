@@ -16,7 +16,7 @@ case class DocItem(docInt: Int, tf: Int)
 
 object LazyIndex extends App {
 
-  val TOTAL_NUMBER = 1000
+  val TOTAL_NUMBER = 10000
   // global number of docs to take into consideration MAX = 100000
   val path = "data"
 
@@ -51,7 +51,7 @@ object LazyIndex extends App {
   println("start queries")
 
 
-  // TODO all queries ! now take only first query for test with id =51
+  // TODO: For now take only first query for test (it reads all query but we do take(1) later
   //val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
   var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt"))
   var queryResults = Map[(Int, Int), String]()
@@ -67,12 +67,23 @@ object LazyIndex extends App {
   // Sort by Query ID
   val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
 
+  // TODO: only in VALIDATION mode (for 40 queries)
   showResults(results_sorted)
+
+
+  //TODO, print results for 10 queries to file. Currently deactivated
+  // If run mode is "TEST" (proessing the 10 queries) save results to file
+  val model = "t" // or l for language
+  if(1 == 2) {
+    val filename = "ranking-" + model + "-28.run"
+    InOutUtils.saveResults(results_sorted, filename)
+  }
 
   println("results by query: ")
   results_sorted.foreach(result => {
     println(result)
   })
+
 
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
@@ -92,6 +103,8 @@ object LazyIndex extends App {
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
   }
+
+
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
 
