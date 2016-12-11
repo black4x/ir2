@@ -7,7 +7,8 @@ import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 import utils.InOutUtils
 
-import scala.collection.Map
+import scala.collection.immutable.ListMap
+import scala.collection.{Map, mutable}
 
 case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
@@ -15,7 +16,7 @@ case class DocItem(docInt: Int, tf: Int)
 
 object LazyIndex extends App {
 
-  val TOTAL_NUMBER = 10000
+  val TOTAL_NUMBER = 1000
   // global number of docs to take into consideration MAX = 100000
   val path = "data"
 
@@ -37,11 +38,13 @@ object LazyIndex extends App {
   myStopWatch.start
 
   // ONLY ONE time runs through entire collection
-  for (i <- 0 to shardsNumber) {
+  var chunkLengthTotal = 0
+  for (i <- 0 to shardsNumber-1){
     val streamChunk = stream.slice(i * shardSize, i * shardSize + shardSize)
     invIndexMap = merge(invIndexMap, createInvertedIndex(streamChunk))
     printStat(i)
   }
+
 
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
@@ -49,12 +52,25 @@ object LazyIndex extends App {
 
 
   // TODO all queries ! now take only first query for test with id =51
-  val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
-  val results = query(oneQuery, termModelScoring)
-  showResults(results)
+  //val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
+  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt"))
+  var queryResults = Map[(Int, Int), String]()
+  //var queryResults = query(oneQuery, termModelScoring)
+
+  // Todo: remove later. If only one query shall be executed for testing do this:
+  allQueries = allQueries.take(1)
+
+  allQueries.foreach( q => {
+    queryResults = queryResults ++ query(q, termModelScoring)
+  })
+
+  // Sort by Query ID
+  val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
+
+  showResults(results_sorted)
 
   println("results by query: ")
-  results.foreach(result => {
+  results_sorted.foreach(result => {
     println(result)
   })
 
@@ -69,12 +85,13 @@ object LazyIndex extends App {
     }).product
   }
 
-  def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double =
+  def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
+
     queryTokenList.map(token =>
       log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDistinctTokensNumberForDoc(docId))) *
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
-
+  }
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
 
@@ -91,10 +108,11 @@ object LazyIndex extends App {
       case None => 0
     }
 
-  def getCandidateDocumentsIds(queryTokensIds: Seq[Int]): Set[Int] =
+  def getCandidateDocumentsIds(queryTokensIds: Seq[Int]): Set[Int] = {
     queryTokensIds.map(tokenId => {
       invIndexMap.getOrElse(tokenId, Stream.Empty).toSet
     }).reduce(_ ++ _).map(x => x.docInt)
+  }
 
   def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
     stream.flatMap(doc => {
@@ -150,11 +168,14 @@ object LazyIndex extends App {
     val content = query._2
     val queryID = query._1
     val queryTokensIds = filter(content).map(token => token.hashCode)
-    val candidatesIds = getCandidateDocumentsIds(queryTokensIds)
 
-    // Scoring
-    val results = candidatesIds.map(docId => docId -> scoringFunction(docId, queryTokensIds))
-      .toSeq.sortBy(x => x._2).take(100).zip(Stream from 1)
+    val candidatesIDs = getCandidateDocumentsIds(queryTokensIds)
+    //val candidatesIDs2: Seq[Int] = candidatesIDs.toSeq
+
+
+    // Scoring (sort results descending and return only top 100 results)
+    val results = candidatesIDs.map(docId => docId -> scoringFunction(docId, queryTokensIds))
+      .toSeq.sortBy(x => -x._2).take(100).zip(Stream from 1)
 
     results.map(x => ((queryID, x._2), getDocNameByHashCode(x._1._1))).toMap
   }
