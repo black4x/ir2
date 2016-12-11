@@ -15,19 +15,17 @@ case class DocItem(docInt: Int, tf: Int)
 
 object LazyIndex extends App {
 
-  val N = 10000
+  val TOTAL_NUMBER = 10000
   // global number of docs to take into consideration MAX = 100000
   val path = "data"
 
-  //Sharding magic numbers
-  val shardSizeInPercents = 10
-  // % of total docs number
-  val shardsNumber = (N * (shardSizeInPercents.toDouble / 100)).toInt
-  val shardSize = N / shardsNumber
+  // getNumberOfShards(total number, shard size in %)
+  val shardsNumber = getNumberOfShards(TOTAL_NUMBER, 10)
+  val shardSize = TOTAL_NUMBER / shardsNumber
 
   println(shardsNumber + " shards")
 
-  var stream = new TipsterStream(path).stream.take(N)
+  var stream = new TipsterStream(path).stream.take(TOTAL_NUMBER)
 
   // token -> raw tokens count in document
   var docInfoMap = Map[Int, (String, Int)]()
@@ -72,7 +70,7 @@ object LazyIndex extends App {
   def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double =
     queryTokenList.map(token =>
       log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDistinctTokensNumberForDoc(docId))) *
-        (log2(N) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
+        (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
 
   def getDistinctTokensNumberForDoc(docId: Int): Int =
@@ -183,6 +181,11 @@ object LazyIndex extends App {
   }
 
   def log2(x: Double): Double = math.log(x) / math.log(2)
+
+  def getNumberOfShards(totalNumber: Int, percent: Short): Int = {
+    val n = (totalNumber * (percent.toFloat / 100)).toInt
+    if (n == 0) 1 else n
+  }
 
 }
 
