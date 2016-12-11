@@ -97,7 +97,7 @@ object LazyIndex extends App {
   }
 
   def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
-
+    //println("scoring doc: " + docId)
     queryTokenList.map(token =>
       log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDistinctTokensNumberForDoc(docId))) *
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
@@ -183,8 +183,6 @@ object LazyIndex extends App {
     val queryTokensIds = filter(content).map(token => token.hashCode)
 
     val candidatesIDs = getCandidateDocumentsIds(queryTokensIds)
-    //val candidatesIDs2: Seq[Int] = candidatesIDs.toSeq
-
 
     // Scoring (sort results descending and return only top 100 results)
     val results = candidatesIDs.map(docId => docId -> scoringFunction(docId, queryTokensIds))
