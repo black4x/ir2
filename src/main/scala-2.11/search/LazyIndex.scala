@@ -17,7 +17,7 @@ case class DocItem(docInt: Int, tf: Int)
 // 1 run through entire collection!
 object LazyIndex extends App {
 
-  val TOTAL_NUMBER = 10000
+  val TOTAL_NUMBER = 100000
   // global number of docs to take into consideration MAX = 100000
 
   // getNumberOfShards(total number, shard size in %)
@@ -61,7 +61,7 @@ object LazyIndex extends App {
   allQueries = allQueries.take(1)
 
   allQueries.foreach(q => {
-    queryResults = queryResults ++ query(q, languageModelScoring)
+    queryResults = queryResults ++ query(q, termModelScoring)
   })
 
   myStopWatch.stop
@@ -82,10 +82,10 @@ object LazyIndex extends App {
     InOutUtils.saveResults(results_sorted, filename)
   }
 
-  println("results by query: ")
-  results_sorted.foreach(result => {
-    println(result)
-  })
+//  println("results by query: ")
+//  results_sorted.foreach(result => {
+//    println(result)
+//  })
 
 
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
@@ -102,7 +102,7 @@ object LazyIndex extends App {
   def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     //println("scoring doc: " + docId)
     queryTokenList.map(token =>
-      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / (getDocLength(docId).toDouble + getDocDistinctTkn(docId) /*getDistinctTokensNumberForDoc(docId)*/)) *
+      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / log2(getDocLength(docId).toDouble + getDocDistinctTkn(docId) )) *
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
   }

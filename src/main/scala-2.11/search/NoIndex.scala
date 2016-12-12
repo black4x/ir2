@@ -10,7 +10,7 @@ import scala.collection.mutable
 // 2 runs through entire collection!
 object NoIndex extends App {
 
-  var stream = new TipsterStream("data").stream.take(10000)
+  var stream = new TipsterStream("data").stream.take(1000)
   println("Number of files in zips = " + stream.length)
 
   val query = Utils.filter("Airbus Subsidies")
@@ -59,6 +59,8 @@ object NoIndex extends App {
   myStopWatch.stop
   Utils.showResults(result_formatted)
   println("done " + myStopWatch.stopped)
+
+  // ----------------------------- END of Execution ------------------------
 
   def getTermFrequencyMap(query: Seq[String], tokens: Seq[String]): Map[String, Int] = {
     query.map(t => (t, tokens.count(word => word == t))).toMap

@@ -10,7 +10,9 @@ import scala.collection.Map
 
 object Utils {
 
-  def filter(content: String): Seq[String] = StopWords.filterOutSW(Tokenizer.tokenize(content))
+  def tokenize (text: String) : List[String] =text.toLowerCase.split("[- .,;:?!*&$-+\"\'\t\n\r\f `]+").filter(w => w.length >= 3).toList
+
+  def filter(content: String): Seq[String] = StopWords.filterOutSW(tokenize(content))
     .map(v => PorterStemmer.stem(v))
 
   def showResults(query_results_top_100: Map[(Int, Int), String]): Unit = {
