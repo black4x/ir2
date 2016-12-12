@@ -1,4 +1,4 @@
-package Indexing
+package search
 
 import Evaluation.QueryEvaluation
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
@@ -7,8 +7,8 @@ import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 import utils.InOutUtils
 
+import scala.collection.Map
 import scala.collection.immutable.ListMap
-import scala.collection.{Map, mutable}
 
 case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
@@ -39,7 +39,7 @@ object LazyIndex extends App {
 
   // ONLY ONE time runs through entire collection
   var chunkLengthTotal = 0
-  for (i <- 0 to shardsNumber-1){
+  for (i <- 0 until shardsNumber) {
     val streamChunk = stream.slice(i * shardSize, i * shardSize + shardSize)
     invIndexMap = merge(invIndexMap, createInvertedIndex(streamChunk))
     printStat(i)
@@ -61,15 +61,15 @@ object LazyIndex extends App {
   // Todo: remove later. If only one query shall be executed for testing do this:
   allQueries = allQueries.take(1)
 
-  allQueries.foreach( q => {
-    queryResults = queryResults ++ query(q, termModelScoring)
+  allQueries.foreach(q => {
+    queryResults = queryResults ++ query(q, languageModelScoring)
   })
 
   myStopWatch.stop
   println("Queries executed: " + myStopWatch.stopped)
 
   // Sort by Query ID
-  val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
+  val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
 
   // TODO: only in VALIDATION mode (for 40 queries)
   showResults(results_sorted)
@@ -78,7 +78,7 @@ object LazyIndex extends App {
   //TODO, print results for 10 queries to file. Currently deactivated
   // If run mode is "TEST" (proessing the 10 queries) save results to file
   val model = "t" // or l for language
-  if(1 == 2) {
+  if (1 == 2) {
     val filename = "ranking-" + model + "-28.run"
     InOutUtils.saveResults(results_sorted, filename)
   }
@@ -174,16 +174,16 @@ object LazyIndex extends App {
   }
 
   def getDocNameByHashCode(hashCode: Int): String =
-    docInfoMap.getOrElse(hashCode, ("", 0,0))._1
+    docInfoMap.getOrElse(hashCode, ("", 0, 0))._1
 
   def sumAllTokens(): Int =
     docInfoMap.map(x => x._2._2).sum
 
   def getDocLength(docId: Int): Int =
-    docInfoMap.getOrElse(docId, ("",0,0))._2
+    docInfoMap.getOrElse(docId, ("", 0, 0))._2
 
   def getDocDistinctTkn(docId: Int): Int =
-    docInfoMap.getOrElse(docId, ("",0,0))._3
+    docInfoMap.getOrElse(docId, ("", 0, 0))._3
 
   def query(query: (Int, String), scoringFunction: (Int, Seq[Int]) => Double): Map[(Int, Int), String] = {
     val content = query._2

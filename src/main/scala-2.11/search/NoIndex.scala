@@ -1,11 +1,13 @@
-import java.io.{FileInputStream, InputStream}
+package search
+
+import java.io.InputStream
 
 import ch.ethz.dal.tinyir.alerts.ScoredResult
 import ch.ethz.dal.tinyir.io.ZipDirStream
 import ch.ethz.dal.tinyir.processing.TipsterParse
 import utils.TopResults
 
-object Go extends App {
+object NoIndex extends App {
 
   val tipsterStream = new ZipDirStream("data").stream
   //val relevanceStream = new FileInputStream("data/relevance-judgements.csv")
