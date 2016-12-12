@@ -11,7 +11,7 @@ run it with the command:
 
 then select one of the options:
 
-[1] search.LazyIndex  - create index first, then scoring with Language Model and Token Model
+[1] search.LazyIndex  - create index first, then scoring with Language Model and Term-based Model
 [2] search.NoIndex    - language model scoring during one run through collection
  
-results are saved in file: XXX
+results are saved in files: ranking-[t|l]-28.run
