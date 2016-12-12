@@ -14,20 +14,21 @@ case class DocItem(docInt: Int, tf: Int)
 
 // 1 run through entire collection!
 object LazyIndex extends App {
+  val TOTAL_NUMBER = 100000
 
   val VALIDATION_MODE = "vali"
   val TEST_MODE = "test"
 
-  val runMode = TEST_MODE
+  val runMode = VALIDATION_MODE
 
   val TM = "t"
   val LM = "l"
 
-  val TOTAL_NUMBER = 10000
+
   // global number of docs to take into consideration MAX = 100000
 
   // getNumberOfShards(total number, shard size in %)
-  val shardsNumber = getNumberOfShards(TOTAL_NUMBER, 25)
+  val shardsNumber = 100//getNumberOfShards(TOTAL_NUMBER, 50)
   val shardSize = TOTAL_NUMBER / shardsNumber
 
   println(shardsNumber + " shards")
@@ -47,7 +48,7 @@ object LazyIndex extends App {
   var chunkLengthTotal = 0
   for (i <- 0 until shardsNumber) {
     invIndexMap = merge(invIndexMap, createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize)))
-    if (i % 100 == 0) printStat(i)
+    if (i % 10 == 0) printStat(i)
   }
 
   myStopWatch.stop
@@ -72,6 +73,9 @@ object LazyIndex extends App {
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
   def executeQueries(model: String): Unit ={
+    if (model == TM ) println(" ------------------ Term-based Model")
+    else println(" ------------------ Language Model")
+
     var queryResults = Map[(Int, Int), String]()
 
     queries.foreach(q => {
@@ -86,9 +90,10 @@ object LazyIndex extends App {
     val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
 
     if (runMode == VALIDATION_MODE) {
+      //println("results by query: ")
+      //results_sorted.foreach(result => {println(result)})
+
       InOutUtils.evalResuts(results_sorted)
-      println("results by query: ")
-      results_sorted.foreach(result => {println(result)})
 
     }else {
       val filename = "ranking-" + model + "-28.run"

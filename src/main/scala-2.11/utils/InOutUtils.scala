@@ -29,8 +29,9 @@ object InOutUtils {
 
     val metrics = myQE.getQueryMetrics()
     val meanAvgPrecision = myQE.getMAP()
+    val metricsList = metrics.toSeq.sortBy(key => key._1).toList
 
-    metrics.foreach(metrics_per_query => {
+    metricsList.foreach(metrics_per_query => {
       print("Query: " + metrics_per_query._1 + " -> ")
       print("Precision: " + metrics_per_query._2(0))
       print(", Recall: " + metrics_per_query._2(1))
