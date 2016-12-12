@@ -14,11 +14,11 @@ case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
 case class DocItem(docInt: Int, tf: Int)
 
+// 1 run through entire collection!
 object LazyIndex extends App {
 
   val TOTAL_NUMBER = 10000
   // global number of docs to take into consideration MAX = 100000
-  val path = "data"
 
   // getNumberOfShards(total number, shard size in %)
   val shardsNumber = getNumberOfShards(TOTAL_NUMBER, 10)
@@ -26,7 +26,7 @@ object LazyIndex extends App {
 
   println(shardsNumber + " shards")
 
-  var stream = new TipsterStream(path).stream.take(TOTAL_NUMBER)
+  var stream = new TipsterStream("data").stream.take(TOTAL_NUMBER)
 
   // token_id -> (token, raw tokens count in document, distinct tokens in doc)
   var docInfoMap = Map[Int, (String, Int, Int)]()
@@ -45,7 +45,6 @@ object LazyIndex extends App {
     printStat(i)
   }
 
-
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
   println("start queries")
@@ -54,7 +53,7 @@ object LazyIndex extends App {
 
   // TODO: For now take only first query for test (it reads all query but we do take(1) later
   //val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
-  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt"))
+  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream("data/questions-descriptions.txt"))
   var queryResults = Map[(Int, Int), String]()
   //var queryResults = query(oneQuery, termModelScoring)
 
@@ -72,7 +71,7 @@ object LazyIndex extends App {
   val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
 
   // TODO: only in VALIDATION mode (for 40 queries)
-  showResults(results_sorted)
+  Utils.showResults(results_sorted)
 
 
   //TODO, print results for 10 queries to file. Currently deactivated
@@ -108,7 +107,6 @@ object LazyIndex extends App {
 
   }
 
-
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
 
@@ -133,7 +131,7 @@ object LazyIndex extends App {
 
   def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
     stream.flatMap(doc => {
-      val filteredContent = filter(doc.content)
+      val filteredContent = Utils.filter(doc.content)
       val distinctTokensInDoc: Int = filteredContent.distinct.length
       docInfoMap += (doc.name.hashCode -> (doc.name, filteredContent.length, distinctTokensInDoc))
       filteredContent.groupBy(identity)
@@ -145,10 +143,6 @@ object LazyIndex extends App {
       .groupBy(_.termHash)
       // .filter(q => q._2.size < docFrequencyMax)
       .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
-
-  def filter(content: String): Seq[String] = StopWords.filterOutSW(Tokenizer.tokenize(content))
-    //.filter(t => t.length > tokenLengthMin)
-    .map(v => PorterStemmer.stem(v))
 
   def merge(i1: Map[Int, Stream[DocItem]], i2: Map[Int, Stream[DocItem]]): Map[Int, Stream[DocItem]] =
     i1 ++ i2.map { case (token, stream) => token -> (stream ++ i1.getOrElse(token, Stream.Empty)).distinct }
@@ -188,7 +182,7 @@ object LazyIndex extends App {
   def query(query: (Int, String), scoringFunction: (Int, Seq[Int]) => Double): Map[(Int, Int), String] = {
     val content = query._2
     val queryID = query._1
-    val queryTokensIds = filter(content).map(token => token.hashCode)
+    val queryTokensIds = Utils.filter(content).map(token => token.hashCode)
 
     val candidatesIDs = getCandidateDocumentsIds(queryTokensIds)
 
@@ -197,27 +191,6 @@ object LazyIndex extends App {
       .toSeq.sortBy(x => -x._2).take(100).zip(Stream from 1)
 
     results.map(x => ((queryID, x._2), getDocNameByHashCode(x._1._1))).toMap
-  }
-
-  def showResults(query_results_top_100: Map[(Int, Int), String]): Unit = {
-    val relevance_judgement_stream = DocStream.getStream(path + "/relevance-judgements.csv")
-    val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
-    val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
-    myQE.calculateMetrics()
-
-    val metrics = myQE.getQueryMetrics()
-    val meanAvgPrecision = myQE.getMAP()
-
-    metrics.foreach(metrics_per_query => {
-      print("Query: " + metrics_per_query._1 + " -> ")
-      print("Precision: " + metrics_per_query._2(0))
-      print(", Recall: " + metrics_per_query._2(1))
-      print(", F1: " + metrics_per_query._2(2))
-      print(", Avg Precision: " + metrics_per_query._2(3))
-      println(" ")
-    })
-
-    println("MAP is: " + meanAvgPrecision)
   }
 
   def log2(x: Double): Double = math.log(x) / math.log(2)
