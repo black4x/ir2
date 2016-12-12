@@ -7,6 +7,7 @@ import utils.InOutUtils
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
+import scala.collection.mutable.ListBuffer
 
 case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
@@ -39,7 +40,8 @@ object LazyIndex extends App {
   var docInfoMap = Map[Int, (String, Int, Int)]()
 
   // token_id -> Stream of DocItem(docInt: Int, tf: Int)
-  var invIndexMap = Map[Int, Stream[DocItem]]()
+  //var invIndexMap = Map[Int, List[DocItem]]()
+  var invIndexMapList = new ListBuffer[Map[Int, List[DocItem]]]
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -47,12 +49,17 @@ object LazyIndex extends App {
   // ONLY ONE time runs through entire collection
   var chunkLengthTotal = 0
   for (i <- 0 until shardsNumber) {
-    invIndexMap = merge(invIndexMap, createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize)))
-    if (i % 10 == 0) printStat(i)
+    invIndexMapList += createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize))
+    printStat(i)
   }
+
+  println("merging... ")
+  var invIndexMap = invIndexMapList.reduce((a1, a2) => merge(a1, a2))
 
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
+  printUsedMem()
+
   println("start queries")
 
 
@@ -66,9 +73,11 @@ object LazyIndex extends App {
   else {
     queries = InOutUtils.getTestQueries(query_stream_test)
   }
-
+  printUsedMem()
   executeQueries(TM)
+  printUsedMem()
   executeQueries(LM)
+  printUsedMem()
 
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
@@ -114,7 +123,7 @@ object LazyIndex extends App {
     //println("scoring doc: " + docId)
     queryTokenList.map(token =>
       log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / log2(getDocLength(docId).toDouble + getDocDistinctTkn(docId))) *
-        (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
+        (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, List()).length))).sum
 
   }
 
@@ -125,10 +134,10 @@ object LazyIndex extends App {
     termFrequencyInCollection(token).toDouble / totalCount
 
   def termFrequencyInCollection(tokenId: Int): Int =
-    invIndexMap.getOrElse(tokenId, Stream.Empty).map(item => item.tf).sum
+    invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
 
   def getTermFrequencyFromInvIndex(tokenId: Int, docId: Int): Int =
-    invIndexMap.getOrElse(tokenId, Stream.Empty)
+    invIndexMap.getOrElse(tokenId, List())
       .find(item => item.docInt == docId) match {
       case Some(d) => d.tf
       case None => 0
@@ -136,11 +145,11 @@ object LazyIndex extends App {
 
   def getCandidateDocumentsIds(queryTokensIds: Seq[Int]): Set[Int] = {
     queryTokensIds.map(tokenId => {
-      invIndexMap.getOrElse(tokenId, Stream.Empty).toSet
+      invIndexMap.getOrElse(tokenId, List()).toSet
     }).reduce(_ ++ _).map(x => x.docInt)
   }
 
-  def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
+  def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, List[DocItem]] =
     stream.flatMap(doc => {
       val filteredContent = InOutUtils.filter(doc.content)
       val distinctTokensInDoc: Int = filteredContent.distinct.length
@@ -153,10 +162,10 @@ object LazyIndex extends App {
     })
       .groupBy(_.termHash)
       // .filter(q => q._2.size < docFrequencyMax)
-      .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
+      .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt).toList)
 
-  def merge(i1: Map[Int, Stream[DocItem]], i2: Map[Int, Stream[DocItem]]): Map[Int, Stream[DocItem]] =
-    i1 ++ i2.map { case (token, stream) => token -> (stream ++ i1.getOrElse(token, Stream.Empty)).distinct }
+  def merge(i1: Map[Int, List[DocItem]], i2: Map[Int, List[DocItem]]): Map[Int, List[DocItem]] =
+    i1 ++ i2.map { case (token, stream) => token -> (stream ++ i1.getOrElse(token, List())).distinct }
 
   def printUsedMem(): Unit = {
     val runtime = Runtime.getRuntime
@@ -169,12 +178,12 @@ object LazyIndex extends App {
     } else {
       ""
     }
-    println(" memory used:  " + f"$p%2.0f" + "% " + warning)
+    println(" memory used:  " + f"$p%2.0f" + "% :" +f"$usedMem%6d" + " from" + f"$maxMem%6d" + warning)
   }
 
   def printStat(currentShard: Int): Unit = {
     val p = (currentShard / shardsNumber.toDouble) * 100
-    print(f"$p%2.0f" + "% ")
+    print("done: "+ f"$p%2.0f" + "% .")
     printUsedMem()
   }
 
