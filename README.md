@@ -1,7 +1,9 @@
 # ir
 Retrieval System
 
-before run please copy file documents.zip into: prj2/data 
+before run please copy files:
+1. documents.zip  ---> prj2/data 
+2. tinyir-1.1.jar ---> prj2/lib
 
 
 run it with the command:
