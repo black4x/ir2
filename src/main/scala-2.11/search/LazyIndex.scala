@@ -1,10 +1,8 @@
 package search
 
-import Evaluation.QueryEvaluation
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
-import ch.ethz.dal.tinyir.processing.{StopWords, Tokenizer, XMLDocument}
+import ch.ethz.dal.tinyir.processing.XMLDocument
 import ch.ethz.dal.tinyir.util.StopWatch
-import com.github.aztek.porterstemmer.PorterStemmer
 import utils.InOutUtils
 
 import scala.collection.Map
@@ -17,11 +15,19 @@ case class DocItem(docInt: Int, tf: Int)
 // 1 run through entire collection!
 object LazyIndex extends App {
 
-  val TOTAL_NUMBER = 100000
+  val VALIDATION_MODE = "vali"
+  val TEST_MODE = "test"
+
+  val runMode = TEST_MODE
+
+  val TM = "t"
+  val LM = "l"
+
+  val TOTAL_NUMBER = 10000
   // global number of docs to take into consideration MAX = 100000
 
   // getNumberOfShards(total number, shard size in %)
-  val shardsNumber = getNumberOfShards(TOTAL_NUMBER, 10)
+  val shardsNumber = getNumberOfShards(TOTAL_NUMBER, 25)
   val shardSize = TOTAL_NUMBER / shardsNumber
 
   println(shardsNumber + " shards")
@@ -40,55 +46,55 @@ object LazyIndex extends App {
   // ONLY ONE time runs through entire collection
   var chunkLengthTotal = 0
   for (i <- 0 until shardsNumber) {
-    val streamChunk = stream.slice(i * shardSize, i * shardSize + shardSize)
-    invIndexMap = merge(invIndexMap, createInvertedIndex(streamChunk))
-    printStat(i)
+    invIndexMap = merge(invIndexMap, createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize)))
+    if (i % 100 == 0) printStat(i)
   }
 
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
   println("start queries")
 
-  myStopWatch.start
 
-  // TODO: For now take only first query for test (it reads all query but we do take(1) later
-  //val oneQuery = InOutUtils.getValidationQueries(DocStream.getStream(path + "/questions-descriptions.txt")).head
-  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream("data/questions-descriptions.txt"))
-  var queryResults = Map[(Int, Int), String]()
-  //var queryResults = query(oneQuery, termModelScoring)
+  val query_stream_validation = DocStream.getStream("data/questions-descriptions.txt")
+  val query_stream_test = DocStream.getStream("data/test-questions.txt")
+  var queries = List[(Int, String)]()
 
-  // Todo: remove later. If only one query shall be executed for testing do this:
-  allQueries = allQueries.take(1)
-
-  allQueries.foreach(q => {
-    queryResults = queryResults ++ query(q, termModelScoring)
-  })
-
-  myStopWatch.stop
-  println("Queries executed: " + myStopWatch.stopped)
-
-  // Sort by Query ID
-  val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
-
-  // TODO: only in VALIDATION mode (for 40 queries)
-  Utils.showResults(results_sorted)
-
-
-  //TODO, print results for 10 queries to file. Currently deactivated
-  // If run mode is "TEST" (proessing the 10 queries) save results to file
-  val model = "t" // or l for language
-  if (1 == 2) {
-    val filename = "ranking-" + model + "-28.run"
-    InOutUtils.saveResults(results_sorted, filename)
+  if (runMode == VALIDATION_MODE) {
+    queries = InOutUtils.getValidationQueries(query_stream_validation)
+  }
+  else {
+    queries = InOutUtils.getTestQueries(query_stream_test)
   }
 
-//  println("results by query: ")
-//  results_sorted.foreach(result => {
-//    println(result)
-//  })
-
+  executeQueries(TM)
+  executeQueries(LM)
 
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
+
+  def executeQueries(model: String): Unit ={
+    var queryResults = Map[(Int, Int), String]()
+
+    queries.foreach(q => {
+      myStopWatch.start
+      if (model == TM) queryResults = queryResults ++ query(q, termModelScoring)
+      else queryResults = queryResults ++ query(q, languageModelScoring)
+      myStopWatch.stop
+      println("Query [" + q._1 + "] executed: " + myStopWatch.stopped)
+    })
+
+    // Sort by Query ID
+    val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
+
+    if (runMode == VALIDATION_MODE) {
+      InOutUtils.evalResuts(results_sorted)
+      println("results by query: ")
+      results_sorted.foreach(result => {println(result)})
+
+    }else {
+      val filename = "ranking-" + model + "-28.run"
+      InOutUtils.saveResults(results_sorted, filename)
+    }
+  }
 
   def languageModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     val lambda = 0.6f
@@ -102,7 +108,7 @@ object LazyIndex extends App {
   def termModelScoring(docId: Int, queryTokenList: Seq[Int]): Double = {
     //println("scoring doc: " + docId)
     queryTokenList.map(token =>
-      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / log2(getDocLength(docId).toDouble + getDocDistinctTkn(docId) )) *
+      log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / log2(getDocLength(docId).toDouble + getDocDistinctTkn(docId))) *
         (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, Stream.Empty).length))).sum
 
   }
@@ -131,7 +137,7 @@ object LazyIndex extends App {
 
   def createInvertedIndex(stream: Stream[XMLDocument]): Map[Int, Stream[DocItem]] =
     stream.flatMap(doc => {
-      val filteredContent = Utils.filter(doc.content)
+      val filteredContent = InOutUtils.filter(doc.content)
       val distinctTokensInDoc: Int = filteredContent.distinct.length
       docInfoMap += (doc.name.hashCode -> (doc.name, filteredContent.length, distinctTokensInDoc))
       filteredContent.groupBy(identity)
@@ -182,7 +188,7 @@ object LazyIndex extends App {
   def query(query: (Int, String), scoringFunction: (Int, Seq[Int]) => Double): Map[(Int, Int), String] = {
     val content = query._2
     val queryID = query._1
-    val queryTokensIds = Utils.filter(content).map(token => token.hashCode)
+    val queryTokensIds = InOutUtils.filter(content).map(token => token.hashCode)
 
     val candidatesIDs = getCandidateDocumentsIds(queryTokensIds)
 
