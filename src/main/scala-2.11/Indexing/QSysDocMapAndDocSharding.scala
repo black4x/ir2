@@ -6,8 +6,6 @@ import main.MyTokenizer
 import scala.collection.mutable.ListBuffer
 
 
-// TODO toLowerCase!!! for all tokens during comparison
-
 class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: Int = 30000) {
 
   private val runtime = Runtime.getRuntime

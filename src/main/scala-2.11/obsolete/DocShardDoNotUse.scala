@@ -1,11 +1,8 @@
 package obsolete
 
-import ch.ethz.dal.tinyir.processing._
-import ch.ethz.dal.tinyir.util.StopWatch
-import com.github.aztek.porterstemmer.PorterStemmer
-import main.TfTupleDocName
 
-class DocShardDoNotUse(var partstream:Stream[Document]) {
+
+class DocShardDoNotUse() {
    /* val myStopWatch = new StopWatch()
     myStopWatch.start
     /*creates the inverted index*/

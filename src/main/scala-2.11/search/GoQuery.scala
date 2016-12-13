@@ -1,7 +1,7 @@
 package search
 
 import Evaluation.QueryEvaluation
-import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysNoIndex}
+import Indexing.{QSysDocMapAndDocSharding, QSysNoIndex}
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
 import ch.ethz.dal.tinyir.util.StopWatch
 import utils.InOutUtils
@@ -14,35 +14,33 @@ import scala.collection.immutable.ListMap
   */
 object GoQuery extends App {
 
-  // Todo: Read parameters from console: sharding or not, compression or not, run with test queries, run with real queries
-  val DOC_SHARDING = "shard"
-  val INDEX_NORMAL = "normal"
-  val NO_INDEX = "noindex"
   val VALIDATION_MODE = "vali"
   val TEST_MODE = "test"
-  val TERM_BASED = "t" // t = term based, l = language model
-  val LANGUAGE = "l"
+  val INDEX = "index"
+  val NO_INDEX = "noindex"
+
+  val TM = "t"
+  val LM = "l"
 
   // Set default parameters
   var runMode = TEST_MODE//VALIDATION_MODE
-  var model = TERM_BASED
-  var indexMode = NO_INDEX//DOC_SHARDING //INDEX_NORMAL, NO_INDEX
+  var indexMode = INDEX
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream.take(1000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(100)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
-  //relevance_judgement.foreach(rj => println(rj))
 
   // Get list of query IDs and their titles (query ID needed for submission format!)
   val query_stream_validation = DocStream.getStream("data/questions-descriptions.txt")
   val query_stream_test = DocStream.getStream("data/test-questions.txt")
   var queries = List[(Int, String)]()
 
+  // Get validation or test queries depending on runMode
   if (runMode == VALIDATION_MODE) {
     queries = InOutUtils.getValidationQueries(query_stream_validation)
   }
@@ -50,75 +48,73 @@ object GoQuery extends App {
     queries = InOutUtils.getTestQueries(query_stream_test)
   }
 
-
-  // Create the Inverted Index for the document collection (either normal or with document sharding)
-  var q_sys: QSysDocMap = null
-  var q_sys_sharding: QSysDocMapAndDocSharding = null
+  // Create the Inverted Index for the document collection or use no index
+  var q_sys: QSysDocMapAndDocSharding  = null
   var q_sys_noindex: QSysNoIndex = null
-  if (indexMode == INDEX_NORMAL) {
-    q_sys = new QSysDocMap(collection_tipster_stream)
-  }
-  else if (indexMode == DOC_SHARDING){
-    q_sys_sharding = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/5)
+  if (indexMode == INDEX){
+    q_sys = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/10)
+    executeQueries(TM) // run queries using term based model and save/validate results
+    executeQueries(LM) // run queries using language model and save/validate results
   }
   else if (indexMode == NO_INDEX){
     q_sys_noindex = new QSysNoIndex(collection_tipster_stream)
+    executeQueriesNoIndex(LM) //only Language Model without Index
   }
-
-
-  println("Start of queries")
-  val myStopWatch2 = new StopWatch()
-  myStopWatch2.start
-  var query_results_top_100 = Map[(Int, Int), String]()
-  queries.foreach( query => {
-    // Combine the results of each query into one Map
-    if (indexMode == DOC_SHARDING) {
-      query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2, model)
-    }
-    else if (indexMode == NO_INDEX) {
-      query_results_top_100 = query_results_top_100 ++ q_sys_noindex.query(query._1, query._2)
-    }
-  })
-  myStopWatch2.stop
-  println("Queries executed " + myStopWatch2.stopped)
-
-  // Sort by Query ID
-  val query_results_top_100_sorted = ListMap(query_results_top_100.toSeq.sortBy(key => (key._1._1, key._1._2)):_*)
-
-
-  //todo: remove
-  println("results by query: ")
-  query_results_top_100_sorted.foreach(result => {println(result)})
-
-
-  if (runMode == VALIDATION_MODE) {
-    // Evaluate results (calculate metrics)
-    val myQE = new QueryEvaluation(relevance_judgement, query_results_top_100)
-    myQE.calculateMetrics()
-
-    val metrics = myQE.getQueryMetrics()
-    val meanAvgPrecision = myQE.getMAP()
-
-    metrics.foreach(metrics_per_query => {
-      print("Query: " + metrics_per_query._1 + " -> ")
-      print("Precision: " + metrics_per_query._2(0))
-      print(", Recall: " + metrics_per_query._2(1))
-      print(", F1: " + metrics_per_query._2(2))
-      print(", Avg Precision: " + metrics_per_query._2(3))
-      println(" ")
-    })
-
-    println("MAP is: " + meanAvgPrecision)
-  }
-  // Write results of the 10 queries to file if run mode is TEST
-  else{
-    val filename = "ranking-" + model + "-28.run"
-    InOutUtils.saveResults(query_results_top_100_sorted, filename)
-  }
-
 
   myStopWatch.stop
   println("Indexing and query processing done " + myStopWatch.stopped)
+
+
+//------ end of execution --------//
+
+  def executeQueries(model: String): Unit = {
+    if (model == TM) println(" ------------------ Term-based Model")
+    else println(" ------------------ Language Model")
+
+    var queryResults = Map[(Int, Int), String]()
+
+    queries.foreach(q => {
+      myStopWatch.start
+      if (model == TM) queryResults = queryResults ++ q_sys.query(q._1, q._2, TM)
+      else queryResults = queryResults ++ q_sys.query(q._1, q._2, LM)
+      myStopWatch.stop
+      println("Query [" + q._1 + "] executed: " + myStopWatch.stopped)
+    })
+
+    // Sort by Query ID
+    val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
+
+    if (runMode == VALIDATION_MODE) {
+      //println("results by query: ")
+      //results_sorted.foreach(result => {println(result)})
+      InOutUtils.evalResuts(results_sorted)
+    }
+    else {
+      val filename = "ranking-" + model + "-28.run"
+      InOutUtils.saveResults(results_sorted, filename)
+    }
+  }
+
+  def executeQueriesNoIndex(model: String): Unit = {
+    if (model == TM) println(" ------------------ Term-based Model")
+    else println(" ------------------ Language Model")
+
+    var queryResults = Map[(Int, Int), String]()
+
+    queries.foreach(q => {
+      myStopWatch.start
+      queryResults = queryResults ++ q_sys_noindex.query(q._1,q._2)
+      myStopWatch.stop
+      println("Query [" + q._1 + "] executed: " + myStopWatch.stopped)
+    })
+
+    // Sort by Query ID
+    val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
+
+    //only valution run for no_index
+    InOutUtils.evalResuts(results_sorted)
+
+  }
 
 }
 

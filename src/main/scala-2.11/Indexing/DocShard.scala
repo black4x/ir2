@@ -3,7 +3,7 @@ package Indexing
 import ch.ethz.dal.tinyir.processing._
 import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
-import main.{MyTokenizer, TfTupleDocName}
+import main.MyTokenizer
 
 import scala.collection.Map
 
