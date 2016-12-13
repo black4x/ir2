@@ -81,18 +81,18 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
   def query(queryID: Int, querystring: String, model: String): Map[(Int, Int), String] = {
     val tokenList = MyTokenizer.tokenListFiltered(querystring)
     var candidateDocs = Seq[Int]()
-    var candidateDocsShard = Seq[(String, Int)]()
+    //var candidateDocsShard = Seq[(String, Int)]()
 
     for (loop <- docShards.indices) {
-      //val candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List())).map(pair => pair._1).distinct
+      val candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List())).map(pair => pair._1).distinct
 
-      candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List()).map(pair => (token -> pair._1)))
+      //candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List()).map(pair => (token -> pair._1)))
       // reduce candidate list by only picking the ones that have at least 2 query terms
-      val candidateDocsReduced = candidateDocsShard.groupBy(_._2).map{case (doc,lst) => (doc, lst.length)}.filter(_._2 >=2).map(_._1)
+      //val candidateDocsReduced = candidateDocsShard.groupBy(_._2).map{case (doc,lst) => (doc, lst.length)}.filter(_._2 >=2).map(_._1)
 
-      candidateDocs = candidateDocs.union(candidateDocsReduced.toSeq)
+      //candidateDocs = candidateDocs.union(candidateDocsReduced.toSeq)
 
-      //candidateDocs = candidateDocs.union(candidateDocsShard)
+      candidateDocs = candidateDocs.union(candidateDocsShard)
     }
 
 

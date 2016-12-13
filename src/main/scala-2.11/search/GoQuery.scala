@@ -26,11 +26,13 @@ object GoQuery extends App {
   var runMode = VALIDATION_MODE
   var indexMode = INDEX
 
+  val myStopWatchOverall = new StopWatch()
+  myStopWatchOverall.start
   val myStopWatch = new StopWatch()
-  myStopWatch.start
+
 
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream.take(30000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(10000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -61,8 +63,8 @@ object GoQuery extends App {
     executeQueriesNoIndex(LM) //only Language Model without Index
   }
 
-  myStopWatch.stop
-  println("Indexing and query processing done " + myStopWatch.stopped)
+  myStopWatchOverall.stop
+  println("Indexing and query processing done " + myStopWatchOverall.stopped)
 
 
 //------ end of execution --------//
