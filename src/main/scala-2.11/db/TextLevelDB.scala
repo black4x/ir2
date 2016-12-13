@@ -16,12 +16,12 @@ object TextLevelDB extends App {
   try {
 
     var value = Map[Int, List[Int]]()
-    value += (1 -> List(2, 3))
-
-    val bb = java.nio.ByteBuffer.allocate(8)
+//    value += (1 -> Stream(2, 3))
+//
+//    val bb = java.nio.ByteBuffer.allocate(8)
 
     for ((k, v) <- value){
-      db.put("dd".getBytes, "dsf".getBytes)
+      db.put("dd".getBytes, "aaa".getBytes)//v.map(_.toByte).toArray)
     }
 
     val iterator = db.iterator
@@ -29,8 +29,9 @@ object TextLevelDB extends App {
       iterator.seekToFirst
       while (iterator.hasNext) {
         val key1 = new String(iterator.peekNext().getKey)
-        val value1 = new String (iterator.peekNext().getValue)
-        //val value1 = List(iterator.peekNext().getValue).map(_=> new Int()
+        val value1 = new String(iterator.peekNext().getValue)
+//        val value1 =  Stream(iterator.peekNext().getValue.map(_=> bb.get(_)).to
+//        //val value1 = List(iterator.peekNext().getValue).map(_=> new Int()
         println(key1 + " " + value1)
         iterator.next
       }

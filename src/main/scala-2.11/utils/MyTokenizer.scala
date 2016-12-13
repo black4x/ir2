@@ -20,5 +20,5 @@ object MyTokenizer {
 //    val res2=res1.map(v=>checker.apply(PorterStemmer.stem(v)).getOrElse(""))
 //    res2
 //  }
-  def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(Tokenizer.tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
+  def tokenListFiltered(doccontent: String) = StopWords.filterOutSW(tokenize(doccontent)).map(v=>PorterStemmer.stem(v))
 }

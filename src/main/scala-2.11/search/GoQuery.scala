@@ -56,7 +56,7 @@ object GoQuery extends App {
   if (indexMode == INDEX){
     q_sys = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/10)
     executeQueries(TM) // run queries using term based model and save/validate results
-    executeQueries(LM) // run queries using language model and save/validate results
+    //executeQueries(LM) // run queries using language model and save/validate results
   }
   else if (indexMode == NO_INDEX){
     q_sys_noindex = new QSysNoIndex(collection_tipster_stream)
