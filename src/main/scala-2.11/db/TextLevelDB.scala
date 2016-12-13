@@ -29,8 +29,9 @@ object TextLevelDB extends App {
       iterator.seekToFirst
       while (iterator.hasNext) {
         val key1 = new String(iterator.peekNext().getKey)
+        val value1 = new String (iterator.peekNext().getValue)
         //val value1 = List(iterator.peekNext().getValue).map(_=> new Int()
-        //println(key1 + " " + value1)
+        println(key1 + " " + value1)
         iterator.next
       }
 
