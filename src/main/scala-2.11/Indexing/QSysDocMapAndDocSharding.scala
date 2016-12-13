@@ -103,7 +103,7 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
   def termModelScoring(queryTokenList: Seq[String], doc: Int) = {
 
     //the following function normalized the tf with the document length. Hence longer docs are not favourte. Used
-    val scorings = queryTokenList.map(token => log2((invertedTFIndexReturnTF(token, doc) + 1.0) / (documentLength(doc)._1 + documentLength(doc)._2)) *
+    val scorings = queryTokenList.map(token => log2((invertedTFIndexReturnTF(token, doc) + 1.0) / log2(documentLength(doc)._1 + documentLength(doc)._2)) *
       (log2(nDocs) - log2(documentFrequency(token))))
 
     val result = scorings.sum
