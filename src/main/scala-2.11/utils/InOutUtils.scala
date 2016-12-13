@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
   */
 object InOutUtils {
 
-  def tokenize (text: String) : List[String] =text.toLowerCase.split("[- .,;:?!*&$-+\"\'\t\n\r\f `]+").filter(w => w.length >= 3 && w.length <= 10).toList
+  def tokenize (text: String) : List[String] =text.toLowerCase.split("[- .,;:?!*&$-+\"\'\t\n\r\f `]+").filter(w => w.length >= 3 && w.length <= 14).toList
 
   def filter(content: String): Seq[String] = StopWords.filterOutSW(tokenize(content))
     .map(v => PorterStemmer.stem(v))
