@@ -1,15 +1,13 @@
-import java.io.FileInputStream
+package obsolete
 
 import Evaluation.QueryEvaluation
-import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysDocMapAndDocShardingVBE, QSysNoIndex}
-import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream, ZipDirStream}
-import ch.ethz.dal.tinyir.processing
-import ch.ethz.dal.tinyir.processing.{TipsterParse, XMLDocument}
+import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysNoIndex}
+import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
 import ch.ethz.dal.tinyir.util.StopWatch
 import utils.InOutUtils
 
-import scala.collection.immutable.ListMap
 import scala.collection.Map
+import scala.collection.immutable.ListMap
 
 /**
   * Created by Ralph on 30/11/16.
