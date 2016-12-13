@@ -16,15 +16,12 @@ object GoQuery extends App {
 
   val VALIDATION_MODE = "vali"
   val TEST_MODE = "test"
-  val INDEX = "index"
-  val NO_INDEX = "noindex"
 
   val TM = "t"
   val LM = "l"
 
   // Set default parameters
   var runMode = VALIDATION_MODE
-  var indexMode = INDEX
 
   val myStopWatchOverall = new StopWatch()
   myStopWatchOverall.start
@@ -50,18 +47,11 @@ object GoQuery extends App {
     queries = InOutUtils.getTestQueries(query_stream_test)
   }
 
-  // Create the Inverted Index for the document collection or use no index
-  var q_sys: QSysDocMapAndDocSharding  = null
-  var q_sys_noindex: QSysNoIndex = null
-  if (indexMode == INDEX){
-    q_sys = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/10)
-    executeQueries(TM) // run queries using term based model and save/validate results
-    executeQueries(LM) // run queries using language model and save/validate results
-  }
-  else if (indexMode == NO_INDEX){
-    q_sys_noindex = new QSysNoIndex(collection_tipster_stream)
-    executeQueriesNoIndex(LM) //only Language Model without Index
-  }
+  // Create the Inverted Index for the document collection
+  val q_sys = new QSysDocMapAndDocSharding(collection_tipster_stream,collection_tipster_stream.length/10)
+  executeQueries(TM) // run queries using term based model and save/validate results
+  executeQueries(LM) // run queries using language model and save/validate results
+
 
   myStopWatchOverall.stop
   println("Indexing and query processing done " + myStopWatchOverall.stopped)
@@ -97,26 +87,6 @@ object GoQuery extends App {
     }
   }
 
-  def executeQueriesNoIndex(model: String): Unit = {
-    if (model == TM) println(" ------------------ Term-based Model")
-    else println(" ------------------ Language Model")
-
-    var queryResults = Map[(Int, Int), String]()
-
-    queries.foreach(q => {
-      myStopWatch.start
-      queryResults = queryResults ++ q_sys_noindex.query(q._1,q._2)
-      myStopWatch.stop
-      println("Query [" + q._1 + "] executed: " + myStopWatch.stopped)
-    })
-
-    // Sort by Query ID
-    val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)
-
-    //only valution run for no_index
-    InOutUtils.evalResuts(results_sorted)
-
-  }
 
 }
 
