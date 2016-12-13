@@ -30,9 +30,8 @@ object GoQuery extends App {
   myStopWatchOverall.start
   val myStopWatch = new StopWatch()
 
-
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream.take(10000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(100000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)
@@ -74,7 +73,9 @@ object GoQuery extends App {
     else println(" ------------------ Language Model")
 
     var queryResults = Map[(Int, Int), String]()
+    val queryWatch = new StopWatch()
 
+    queryWatch.start
     queries.foreach(q => {
       myStopWatch.start
       if (model == TM) queryResults = queryResults ++ q_sys.query(q._1, q._2, TM)
@@ -82,6 +83,8 @@ object GoQuery extends App {
       myStopWatch.stop
       println("Query [" + q._1 + "] executed: " + myStopWatch.stopped)
     })
+    queryWatch.stop
+    println("all Queries run in:" + queryWatch.stopped)
 
     // Sort by Query ID
     val results_sorted = ListMap(queryResults.toSeq.sortBy(key => (key._1._1, key._1._2)): _*)

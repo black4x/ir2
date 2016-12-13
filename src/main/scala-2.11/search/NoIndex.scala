@@ -10,10 +10,10 @@ import scala.collection.mutable
 // per query 2 runs through entire collection!
 object NoIndex extends App {
 
-  var stream = new TipsterStream("data").stream.take(10000)
+  var stream = new TipsterStream("data").stream.take(50000)
   println("Number of files in zips = " + stream.length)
 
-  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream("data/questions-descriptions.txt"))
+  var allQueries: List[(Int, String)] = InOutUtils.getValidationQueries(DocStream.getStream("data/questions-descriptions.txt")).take(1)
 
   println("Number of queries = " + allQueries.size)
 
