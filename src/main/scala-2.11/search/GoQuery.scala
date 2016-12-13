@@ -23,14 +23,14 @@ object GoQuery extends App {
   val LM = "l"
 
   // Set default parameters
-  var runMode = TEST_MODE//VALIDATION_MODE
+  var runMode = VALIDATION_MODE
   var indexMode = INDEX
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
 
   val path : String = "data"
-  var collection_tipster_stream = new TipsterStream(path).stream.take(2000)
+  var collection_tipster_stream = new TipsterStream(path).stream.take(30000)
 
   val relevance_judgement_stream = DocStream.getStream("data/relevance-judgements.csv")     //new FileInputStream("data/relevance-judgements.csv")
   val relevance_judgement = InOutUtils.getCodeValueMapAll(relevance_judgement_stream)

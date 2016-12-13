@@ -13,7 +13,7 @@ object MyTokenizer {
 //  println(checker("correctedth"))
 //  println(checker.apply("politicalright"))
     
-  private def tokenize (text: String) : List[String] =text.toLowerCase.split("[- .,;:?!*&$-+\"\'\t\n\r\f `]+").filter(w => w.length >= 3 && w.length < 10).toList
+  private def tokenize (text: String) : List[String] =text.toLowerCase.split("[- .,;:?!*&$-+\"\'\t\n\r\f `]+").filter(w => w.length >= 3 && w.length < 14).toList
     /*Input a eg content of doc, output a list of tokens without stopwords and stemmed*/
 //  def tokenListFiltered(doccontent: String) = {
 //    val res1=StopWords.filterOutSW(Tokenizer.tokenize(doccontent))
