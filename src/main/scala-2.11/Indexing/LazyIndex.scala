@@ -143,8 +143,9 @@ object LazyIndex extends App {
       }
     })
       .groupBy(_.termHash)
-      // .filter(q => q._2.size < docFrequencyMax)
+      //.filter(q => q._2.size < docFrequencyMax)
       .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt))
+
 
   def filter(content: String): Seq[String] = StopWords.filterOutSW(Tokenizer.tokenize(content))
     //.filter(t => t.length > tokenLengthMin)

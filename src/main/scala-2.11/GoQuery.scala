@@ -73,13 +73,9 @@ object GoQuery extends App {
   myStopWatch2.start
   var query_results_top_100 = Map[(Int, Int), String]()
   queries.foreach( query => {
-    // TODO: submit parameter that tells which query model to use: language or term based
     // Combine the results of each query into one Map
-    if (indexMode == INDEX_NORMAL){
-      query_results_top_100 = query_results_top_100 ++ q_sys.query(query._1, query._2)
-    }
-    else if (indexMode == DOC_SHARDING) {
-      query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2)
+    if (indexMode == DOC_SHARDING) {
+      query_results_top_100 = query_results_top_100 ++ q_sys_sharding.query(query._1, query._2, model)
     }
     else if (indexMode == NO_INDEX) {
       query_results_top_100 = query_results_top_100 ++ q_sys_noindex.query(query._1, query._2)

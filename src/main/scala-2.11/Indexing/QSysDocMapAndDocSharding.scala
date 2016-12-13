@@ -10,8 +10,6 @@ import scala.collection.mutable.ListBuffer
 
 class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: Int = 30000) {
 
-  val scoringModel = "lm" // or tm
-
   private val runtime = Runtime.getRuntime
 
   print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / 1000000)
@@ -29,10 +27,10 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
     docShards += docShard
     counter = counter + chuncksize
 
-//    print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / 1000000)
-//    print("** Free Memory:  " + runtime.freeMemory / 1000000)
-//    print("** Total Memory: " + runtime.totalMemory / 1000000)
-//    println("** Max Memory:   " + runtime.maxMemory / 1000000)
+    print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / 1000000)
+    print("** Free Memory:  " + runtime.freeMemory / 1000000)
+    print("** Total Memory: " + runtime.totalMemory / 1000000)
+    println("** Max Memory:   " + runtime.maxMemory / 1000000)
   }
 
   def getDocName(docID: Int): String = {
@@ -67,36 +65,28 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
   val nDocs = docShards.toList.map(x => x.documentMapWithTokenCount.size).sum
   val numberOfTokensInCollection = docShards.toList.map(x => x.numberOfAllTokens).sum
 
-  def query(queryID: Int, querystring: String): Map[(Int, Int), String] = {
+  def query(queryID: Int, querystring: String, model: String): Map[(Int, Int), String] = {
     val tokenList = MyTokenizer.tokenListFiltered(querystring)
     var candidateDocs = Seq[Int]()
 
-    // TODO WHY only pair_1. ?
     for (loop <- docShards.indices) {
       val candidateDocsShard = tokenList.flatMap(token => docShards(loop).invertedTFIndex.getOrElse(token, List())).map(pair => pair._1).distinct
       candidateDocs = candidateDocs.union(candidateDocsShard)
     }
-    //println(candidateDocs.map(candidateDoc => (candidateDoc, scoring(tokenList, candidateDoc))).sortBy(-_._2))
+
     val res1 =
-      if (scoringModel == "lm") {
+      if (model == "l") {
         candidateDocs.map(candidateDoc => (candidateDoc, languageModelScoring(candidateDoc, 0.5f, tokenList, candidateDocs))).sortBy(-_._2).zip(Stream from 1).take(100)
       } else {
-        candidateDocs.map(candidateDoc => (candidateDoc, scoring(tokenList, candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
+        candidateDocs.map(candidateDoc => (candidateDoc, termModelScoring(tokenList, candidateDoc))).sortBy(-_._2).zip(Stream from 1).take(100)
       }
     res1.map(result_tuple => ((queryID, result_tuple._2), getDocName(result_tuple._1._1))).toMap
   }
 
-  //$ is special sign in regular expression
-
-
-  /*tfTuples returns for an input stream of documents the list of postings including termfrequencies*/
-
 
   def log2(x: Double): Double = math.log(x) / math.log(2)
 
-  def scoring(queryTokenList: Seq[String], doc: Int) = {
-    //val scorings=queryTokenList.map(token=>invertedTFIndexReturnTF(token,doc))
-    //val scorings=queryTokenList.map(token=>math.log(invertedTFIndexReturnTF(token,doc)+1.0)/(documentLength(doc)._1+documentLength(doc)._2))
+  def termModelScoring(queryTokenList: Seq[String], doc: Int) = {
 
     //the following function normalized the tf with the document length. Hence longer docs are not favourte. Used
     val scorings = queryTokenList.map(token => log2((invertedTFIndexReturnTF(token, doc) + 1.0) / (documentLength(doc)._1 + documentLength(doc)._2)) *
