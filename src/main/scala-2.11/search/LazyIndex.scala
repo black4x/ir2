@@ -24,7 +24,9 @@ object LazyIndex extends App {
   val TM = "t"
   val LM = "l"
 
+  // Buffers for scoring models (metrics that are the same for each candidate doc)
   var termFrequencyCollectionMap = Map[Int, Int]()
+  var docFrequencyTokenMap = Map[Int, Int]()
 
   // global number of docs to take into consideration MAX = 100000
 
@@ -124,9 +126,21 @@ object LazyIndex extends App {
     //println("scoring doc: " + docId)
     queryTokenList.map(token =>
       log2((getTermFrequencyFromInvIndex(token, docId) + 1.0) / log2(getDocLength(docId).toDouble + getDocDistinctTkn(docId))) *
-        (log2(TOTAL_NUMBER) - log2(invIndexMap.getOrElse(token, List()).length))).sum
+        (log2(TOTAL_NUMBER) - log2(getDocumentFreuqency(token)))).sum
 
   }
+
+  def getDocumentFreuqency(tokenId: Int): Int = {
+
+    var docFrequencyToken = docFrequencyTokenMap.getOrElse(tokenId, 0)
+    if (docFrequencyToken == 0) {
+      docFrequencyToken = invIndexMap.getOrElse(tokenId, List()).length
+      docFrequencyTokenMap += (tokenId -> docFrequencyToken)
+    }
+
+    return docFrequencyToken
+  }
+
 
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
