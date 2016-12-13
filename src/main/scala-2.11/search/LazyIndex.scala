@@ -7,7 +7,6 @@ import utils.InOutUtils
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
-import scala.collection.mutable.ListBuffer
 
 case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
@@ -29,7 +28,8 @@ object LazyIndex extends App {
   // global number of docs to take into consideration MAX = 100000
 
   // getNumberOfShards(total number, shard size in %)
-  val shardsNumber = 100//getNumberOfShards(TOTAL_NUMBER, 50)
+  val shardsNumber = 100
+  //getNumberOfShards(TOTAL_NUMBER, 50)
   val shardSize = TOTAL_NUMBER / shardsNumber
 
   println(shardsNumber + " shards")
@@ -41,7 +41,7 @@ object LazyIndex extends App {
 
   // token_id -> Stream of DocItem(docInt: Int, tf: Int)
   //var invIndexMap = Map[Int, List[DocItem]]()
-  var invIndexMapList = new ListBuffer[Map[Int, List[DocItem]]]
+  var invIndexMap = Map[Int, List[DocItem]]()
 
   val myStopWatch = new StopWatch()
   myStopWatch.start
@@ -49,12 +49,11 @@ object LazyIndex extends App {
   // ONLY ONE time runs through entire collection
   var chunkLengthTotal = 0
   for (i <- 0 until shardsNumber) {
-    invIndexMapList += createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize))
+    invIndexMap = merge(invIndexMap, createInvertedIndex(stream.slice(i * shardSize, i * shardSize + shardSize)))
     printStat(i)
   }
 
   println("merging... ")
-  var invIndexMap = invIndexMapList.reduce((a1, a2) => merge(a1, a2))
 
   myStopWatch.stop
   println("index " + myStopWatch.stopped + " tokens = " + invIndexMap.size)
@@ -81,8 +80,8 @@ object LazyIndex extends App {
 
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
-  def executeQueries(model: String): Unit ={
-    if (model == TM ) println(" ------------------ Term-based Model")
+  def executeQueries(model: String): Unit = {
+    if (model == TM) println(" ------------------ Term-based Model")
     else println(" ------------------ Language Model")
 
     var queryResults = Map[(Int, Int), String]()
@@ -104,7 +103,7 @@ object LazyIndex extends App {
 
       InOutUtils.evalResuts(results_sorted)
 
-    }else {
+    } else {
       val filename = "ranking-" + model + "-28.run"
       InOutUtils.saveResults(results_sorted, filename)
     }
@@ -165,7 +164,10 @@ object LazyIndex extends App {
       .mapValues(_.map(tokenDocItem => DocItem(tokenDocItem.docInt, tokenDocItem.tf)).sortBy(x => x.docInt).toList)
 
   def merge(i1: Map[Int, List[DocItem]], i2: Map[Int, List[DocItem]]): Map[Int, List[DocItem]] =
-    i1 ++ i2.map { case (token, stream) => token -> (stream ++ i1.getOrElse(token, List())).distinct }
+    i1 ++ i2.map { case (token, stream) => token -> sumDocItemList(stream, i1.getOrElse(token, List())) }
+
+  def sumDocItemList(l1: List[DocItem], l2: List[DocItem]): List[DocItem] =
+    (l1 ++ l2).groupBy(_.docInt).mapValues(_.map(_.tf).sum).toList map Function.tupled((id, tf) => DocItem(id, tf))
 
   def printUsedMem(): Unit = {
     val runtime = Runtime.getRuntime
@@ -178,12 +180,12 @@ object LazyIndex extends App {
     } else {
       ""
     }
-    println(" memory used:  " + f"$p%2.0f" + "% :" +f"$usedMem%6d" + " from" + f"$maxMem%6d" + warning)
+    println(" memory used:  (" + f"$usedMem%4d" + " from" + f"$maxMem%6d" +"): " + f"$p%2.0f" +"%"+ warning)
   }
 
   def printStat(currentShard: Int): Unit = {
     val p = (currentShard / shardsNumber.toDouble) * 100
-    print("done: "+ f"$p%2.0f" + "% .")
+    print("done: " + f"$p%2.0f" + "%  --- ")
     printUsedMem()
   }
 
