@@ -1,4 +1,4 @@
-package obsolete
+package search
 
 import Evaluation.QueryEvaluation
 import Indexing.{QSysDocMap, QSysDocMapAndDocSharding, QSysNoIndex}

@@ -78,6 +78,7 @@ object LazyIndex extends App {
   executeQueries(LM)
   printUsedMem()
 
+
   // ----------------------- END OF EXECUTION !!!! ----------------------------------------
 
   def executeQueries(model: String): Unit = {
