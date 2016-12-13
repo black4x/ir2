@@ -12,8 +12,8 @@ case class TermDocItem(termHash: Int, docInt: Int, tf: Int)
 
 case class DocItem(docInt: Int, tf: Int)
 
-// 1 run through entire collection!
-object LazyIndex extends App {
+// deactivated!
+object LazyIndex  {
   val TOTAL_NUMBER = 100000
 
   val VALIDATION_MODE = "vali"

@@ -8,4 +8,4 @@ unmanagedBase := baseDirectory.value / "lib"
 
 javaOptions in run ++= Seq("-Xms10G", "-Xmx14G")
 
-libraryDependencies += "org.iq80.leveldb" % "leveldb" % "0.1"
+
