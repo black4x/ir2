@@ -72,6 +72,7 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
       candidateDocs = candidateDocs.union(candidateDocsShard)
     }
 
+
     val res1 =
       if (model == "l") {
         candidateDocs.map(candidateDoc => (candidateDoc, languageModelScoring(candidateDoc, 0.5f, tokenList, candidateDocs))).sortBy(-_._2).zip(Stream from 1).take(100)
