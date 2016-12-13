@@ -24,6 +24,7 @@ object LazyIndex extends App {
   val TM = "t"
   val LM = "l"
 
+  var termFrequencyCollectionMap = Map[Int, Int]()
 
   // global number of docs to take into consideration MAX = 100000
 
@@ -130,11 +131,20 @@ object LazyIndex extends App {
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
 
-  def lmSmoothingNumber(token: Int, totalCount: Double): Double =
+  def lmSmoothingNumber(token: Int, totalCount: Double): Double = {
     termFrequencyInCollection(token).toDouble / totalCount
+  }
 
-  def termFrequencyInCollection(tokenId: Int): Int =
-    invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
+  def termFrequencyInCollection(tokenId: Int): Int = {
+
+    var termFrequencyCollection = termFrequencyCollectionMap.getOrElse(tokenId,0)
+    if (termFrequencyCollection == 0) {
+      termFrequencyCollection = invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
+      termFrequencyCollectionMap += (tokenId -> termFrequencyCollection)
+    }
+    return termFrequencyCollection
+      //invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
+  }
 
   def getTermFrequencyFromInvIndex(tokenId: Int, docId: Int): Int =
     invIndexMap.getOrElse(tokenId, List())
