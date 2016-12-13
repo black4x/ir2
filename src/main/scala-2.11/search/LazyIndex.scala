@@ -137,10 +137,8 @@ object LazyIndex extends App {
       docFrequencyToken = invIndexMap.getOrElse(tokenId, List()).length
       docFrequencyTokenMap += (tokenId -> docFrequencyToken)
     }
-
-    return docFrequencyToken
+    docFrequencyToken
   }
-
 
   def getDistinctTokensNumberForDoc(docId: Int): Int =
     invIndexMap.count(item => item._2.exists(x => x.docInt == docId))
@@ -156,7 +154,7 @@ object LazyIndex extends App {
       termFrequencyCollection = invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
       termFrequencyCollectionMap += (tokenId -> termFrequencyCollection)
     }
-    return termFrequencyCollection
+    termFrequencyCollection
       //invIndexMap.getOrElse(tokenId, List()).map(item => item.tf).sum
   }
 
