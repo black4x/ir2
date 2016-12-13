@@ -8,6 +8,10 @@ import scala.collection.mutable.ListBuffer
 
 class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: Int = 30000) {
 
+  // Buffers for scoring models (metrics that are the same for each candidate doc)
+  var termFrequencyCollectionMap = Map[String, Int]()
+  var docFrequencyTokenMap = Map[String, Int]()
+
   private val runtime = Runtime.getRuntime
 
   print("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / 1000000)
@@ -47,7 +51,18 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
   }
 
 
-  def documentFrequency(token: String) = docShards.toList.map(x => x.documentFrequency.getOrElse(token, 0)).sum
+  def documentFrequency(token: String): Int = {
+
+    var docFrequencyToken = docFrequencyTokenMap.getOrElse(token, 0)
+    if (docFrequencyToken == 0) {
+      docFrequencyToken = docShards.toList.map(x => x.documentFrequency.getOrElse(token, 0)).sum
+      docFrequencyTokenMap += (token -> docFrequencyToken)
+    }
+
+    return docFrequencyToken
+
+    //docShards.toList.map(x => x.documentFrequency.getOrElse(token, 0)).sum
+  }
 
   def documentLength(doc: Int) = {
     var loop = 0
@@ -99,15 +114,27 @@ class QSysDocMapAndDocSharding(var wholestream: Stream[Document], chuncksize: In
     queryTokenList.map(token => {
       val tokenFrequencyInDoc = invertedTFIndexReturnTF(token, docId).toDouble
       val numberOfTokensInDoc = documentLength(docId)._1.toDouble
-      lambda * (tokenFrequencyInDoc / numberOfTokensInDoc) + (1 - lambda) * lmSmoothingNumber(token, candidateDocs)
+      lambda * (tokenFrequencyInDoc / numberOfTokensInDoc) + (1 - lambda) * lmSmoothingNumber(token)
     }).product
 
 
-  def lmSmoothingNumber(token: String, candidateDocs: Seq[Int]): Double =
-    termFrequencyInCollection(token, candidateDocs).toDouble / numberOfTokensInCollection.toDouble
+  def lmSmoothingNumber(token: String): Double =
+    termFrequencyInCollection(token).toDouble / numberOfTokensInCollection.toDouble
 
-  def termFrequencyInCollection(token: String, candidateDocs: Seq[Int]): Int =
-    candidateDocs.map(docId => invertedTFIndexReturnTF(token, docId)).sum
+  def termFrequencyInCollection(token: String): Int = {
+
+    var termFrequencyCollection = termFrequencyCollectionMap.getOrElse(token,0)
+    if (termFrequencyCollection == 0) {
+      // Sum up term frequencies in inverted index (note: there can be serveral shards with the same token)
+      termFrequencyCollection = docShards.toList.map(x => x.invertedTFIndex.getOrElse(token, List()).map(item => item._2).sum).sum
+      // buffer collection frequency for token
+      termFrequencyCollectionMap += (token -> termFrequencyCollection)
+    }
+    return termFrequencyCollection
+
+    //candidateDocs.map(docId => invertedTFIndexReturnTF(token, docId)).sum
+
+  }
 
   /*Given a document and a token, this function returns the term frequency. Works also if token is not in the doc => tf=0*/
   def invertedTFIndexReturnTF(token: String, doc: Int) = {
