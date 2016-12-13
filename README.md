@@ -6,12 +6,12 @@ before run please copy files:
 2. tinyir-1.1.jar ---> prj2/lib
 
 
-run it with the command:
-> sbt -mem 4096 run
+run it with the command (15GB to be on the save side):
+> sbt -mem 15000 run
 
 then select one of the options:
 
-[1] search.LazyIndex  - create index first, then scoring with Language Model and Term-based Model
-[2] search.NoIndex    - language model scoring during one run through collection
+[1] search.GoQuery  - create index first, then scoring with Language Model and Term-based Model
+[2] search.NoIndex  - language model scoring during one run through collection
  
 results are saved in files: ranking-[t|l]-28.run

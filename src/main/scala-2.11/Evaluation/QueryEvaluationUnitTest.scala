@@ -5,29 +5,11 @@ import scala.collection.Map
 /**
   * Created by Ralph on 22/11/16.
   */
-object QueryEvaluationUnitTest extends App {
+object QueryEvaluationUnitTest /*extends App */{
 
   var relevance_judgement = Map[(Int, Int, String), Int]()
   var query_results = Map[(Int, Int), String]()
 
-  /*
-  // add some dummy values
-  relevance_judgement += ((1, 0, "DOC-A") -> 1)
-  relevance_judgement += ((1, 0, "DOC-B") -> 1)
-  relevance_judgement += ((1, 0, "DOC-C") -> 0)
-  relevance_judgement += ((1, 0, "DOC-D") -> 0)
-
-  relevance_judgement += ((2, 0, "DOC-A") -> 1)
-  relevance_judgement += ((2, 0, "DOC-E") -> 0)
-
-  // 1 correct out of 3
-  query_results += ((1,1) -> "DOC-A")
-  query_results += ((1,2) -> "DOC-C")
-  query_results += ((1,3) -> "DOC-D")
-
-  query_results += ((2,1) -> "DOC-A")
-  query_results += ((2,2) -> "DOC-E")
-  */
 
 // To test AP as in the lecture slides
   relevance_judgement += ((1, 0, "DOC-A") -> 1)
@@ -76,11 +58,7 @@ object QueryEvaluationUnitTest extends App {
   val metrics = myQE.getQueryMetrics()
   val meanAvgPrecision = myQE.getMAP()
 
-  /*
-  metrics.foreach(metrics_per_query => {
-    println(metrics_per_query._1 + " " + metrics_per_query._2.mkString)
-  })
-  */
+
 
   metrics.foreach(metrics_per_query => {
     print(metrics_per_query._1 + " ")
@@ -92,6 +70,3 @@ object QueryEvaluationUnitTest extends App {
 
 
 }
-
-//map{
-//case (query, ignore, doc_name, relevance) => (query, ignore, doc_name, relevance) }

@@ -1,7 +1,7 @@
 package search
 
 import Evaluation.QueryEvaluation
-import Indexing.{QSysDocMapAndDocSharding, QSysNoIndex}
+import Indexing.QSysDocMapAndDocSharding
 import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
 import ch.ethz.dal.tinyir.util.StopWatch
 import utils.InOutUtils
