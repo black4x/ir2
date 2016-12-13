@@ -21,7 +21,7 @@ object GoQuery extends App {
   val LM = "l"
 
   // Set default parameters
-  var runMode = VALIDATION_MODE
+  var runMode = TEST_MODE
 
   val myStopWatchOverall = new StopWatch()
   myStopWatchOverall.start
